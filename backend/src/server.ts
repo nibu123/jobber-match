@@ -17,6 +17,10 @@ import { initChatSocket } from "./socket/chat";
 dotenv.config();
 
 const app = express();
+
+// Trust Railway's reverse proxy so X-Forwarded-For / rate-limit work correctly
+app.set("trust proxy", 1);
+
 const server = http.createServer(app);
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
