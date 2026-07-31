@@ -244,3 +244,69 @@ nav.tabbar a.active {
   margin-right: auto;
   border-bottom-left-radius: 4px;
 }
+
+/* ===== Unified color palette override ===== */
+:root {
+  --accent: #c084fc !important;
+  --text-muted: #9d94ab !important;
+}
+
+body {
+  background: #120c17 !important;
+}
+
+.card {
+  background: #1a1220 !important;
+  border: 1px solid #2e2438 !important;
+  border-radius: 16px !important;
+}
+
+.btn-primary {
+  background: #c084fc !important;
+  color: #1a1220 !important;
+  border: none !important;
+  font-weight: 600 !important;
+}
+
+.btn-secondary {
+  background: transparent !important;
+  border: 1px solid #3a2d47 !important;
+  color: #9d94ab !important;
+}
+
+input, select, textarea {
+  background: #241a2e !important;
+  border: 1px solid #3a2d47 !important;
+  color: #f0ebf5 !important;
+  border-radius: 10px !important;
+  padding: 10px 12px !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: #c084fc !important;
+  outline: none !important;
+}
+
+/* ===== TabBar override ===== */
+nav.tabbar {
+  background: #1a1220 !important;
+  border: 1px solid #2e2438 !important;
+}
+
+nav.tabbar a {
+  color: #9d94ab !important;
+}
+
+nav.tabbar a.active {
+  color: #c084fc !important;
+}
+
+/* ===== Root palette override — replaces old maroon/orange/teal system-wide ===== */
+:root {
+  --surface-hover: #241a2e !important;
+  --surface-3: #2e2438 !important;
+  --teal: #d8b4fe !important;
+  --gold: #c084fc !important;
+  --coral: #7c3aed !important;
+  --success: #4ade80 !important;
+}

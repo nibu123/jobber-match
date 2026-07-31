@@ -60,50 +60,50 @@ router.get("/me", requireAuth, async (req: AuthRequest, res) => {
 
 const updateSchema = z.object({
   displayName: z.string().min(1).max(50).optional(),
-  bio: z.string().max(500).optional(),
-  orientation: z.string().optional(),
-  genderIdentity: z.string().optional(),
-  pronouns: z.string().optional(),
+  bio: z.string().max(500).nullable().optional(),
+  orientation: z.string().nullable().optional(),
+  genderIdentity: z.string().nullable().optional(),
+  pronouns: z.string().nullable().optional(),
   photos: z.array(z.string().url()).optional(),
-  latitude: z.number().optional(),
-  longitude: z.number().optional(),
-  city: z.string().optional(),
-  incognitoMode: z.boolean().optional(),
-  age: z.number().int().min(18).optional(),
-  datingIntentions: z.string().optional(),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
+  city: z.string().nullable().optional(),
+  incognitoMode: z.boolean().nullable().optional(),
+  age: z.number().int().min(18).nullable().optional(),
+  datingIntentions: z.string().nullable().optional(),
 
   // Identity
-  preferredName: z.string().max(50).optional(),
-  beyondBinary: z.boolean().optional(),
-  identityTags: z.array(z.string()).optional(),
+  preferredName: z.string().max(50).nullable().optional(),
+  beyondBinary: z.boolean().nullable().optional(),
+  identityTags: z.array(z.string()).nullable().optional(),
 
   // Relationship
-  relationshipStructure: z.string().optional(),
-  interestedIn: z.array(z.string()).optional(),
-  agePrefMin: z.number().int().min(18).max(120).optional(),
-  agePrefMax: z.number().int().min(18).max(120).optional(),
-  distancePrefKm: z.number().int().min(1).max(500).optional(),
+  relationshipStructure: z.string().nullable().optional(),
+  interestedIn: z.array(z.string()).nullable().optional(),
+  agePrefMin: z.number().int().min(18).max(120).nullable().optional(),
+  agePrefMax: z.number().int().min(18).max(120).nullable().optional(),
+  distancePrefKm: z.number().int().min(1).max(500).nullable().optional(),
 
   // Interests
-  interests: z.array(z.string()).max(15).optional(),
+  interests: z.array(z.string()).max(15).nullable().optional(),
 
   // Lifestyle
-  heightCm: z.number().int().min(100).max(250).optional(),
-  smoking: z.string().optional(),
-  drinking: z.string().optional(),
-  drugFriendly: z.string().optional(),
-  kids: z.string().optional(),
-  religion: z.string().optional(),
-  starSign: z.string().optional(),
-  education: z.string().optional(),
-  occupation: z.string().optional(),
+  heightCm: z.number().int().min(100).max(250).nullable().optional(),
+  smoking: z.string().nullable().optional(),
+  drinking: z.string().nullable().optional(),
+  drugFriendly: z.string().nullable().optional(),
+  kids: z.string().nullable().optional(),
+  religion: z.string().nullable().optional(),
+  starSign: z.string().nullable().optional(),
+  education: z.string().nullable().optional(),
+  occupation: z.string().nullable().optional(),
 
   // About & Safety
-  languages: z.array(z.string()).optional(),
-  hometown: z.string().optional(),
-  prompts: z.array(z.object({ question: z.string(), answer: z.string().max(300) })).max(3).optional(),
-  locationBlur: z.boolean().optional(),
-  communityTags: z.array(z.string()).optional(),
+  languages: z.array(z.string()).nullable().optional(),
+  hometown: z.string().nullable().optional(),
+  prompts: z.array(z.object({ question: z.string(), answer: z.string().max(300) })).max(3).nullable().optional(),
+  locationBlur: z.boolean().nullable().optional(),
+  communityTags: z.array(z.string()).nullable().optional(),
 });
 
 // Update own profile
