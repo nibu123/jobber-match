@@ -1,9 +1,25 @@
 import { Router } from "express";
+import multer from "multer";
 import { z } from "zod";
 import { pool } from "../db/pool";
 import { requireAuth, AuthRequest } from "../middleware/auth";
+import cloudinary from "../config/cloudinary";
 
 const router = Router();
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only image files are allowed"));
+    }
+  },
+});
+
+const MAX_PHOTOS = 6;
 
 // Get own profile
 router.get("/me", requireAuth, async (req: AuthRequest, res) => {
@@ -78,6 +94,98 @@ router.patch("/me", requireAuth, async (req: AuthRequest, res) => {
     res.json(result.rows[0]);
   } catch (err) {
     console.error("Update profile error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Upload a photo (multipart/form-data, field name: "photo")
+router.post(
+  "/photos/upload",
+  requireAuth,
+  upload.single("photo"),
+  async (req: AuthRequest, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: "No photo file provided" });
+    }
+
+    try {
+      const current = await pool.query(
+        "SELECT photos FROM profiles WHERE user_id = $1",
+        [req.userId]
+      );
+      if (current.rows.length === 0) {
+        return res.status(404).json({ error: "Profile not found" });
+      }
+
+      const existingPhotos: string[] = current.rows[0].photos || [];
+      if (existingPhotos.length >= MAX_PHOTOS) {
+        return res.status(400).json({ error: `Maximum ${MAX_PHOTOS} photos allowed` });
+      }
+
+      const base64 = req.file.buffer.toString("base64");
+      const dataUri = `data:${req.file.mimetype};base64,${base64}`;
+
+      const uploadResult = await cloudinary.uploader.upload(dataUri, {
+        folder: "jobber-match/profiles",
+        resource_type: "image",
+        transformation: [{ width: 1080, height: 1080, crop: "limit" }],
+      });
+
+      const updatedPhotos = [...existingPhotos, uploadResult.secure_url];
+
+      const result = await pool.query(
+        "UPDATE profiles SET photos = $1, updated_at = NOW() WHERE user_id = $2 RETURNING *",
+        [updatedPhotos, req.userId]
+      );
+
+      res.json(result.rows[0]);
+    } catch (err) {
+      console.error("Photo upload error:", err);
+      res.status(500).json({ error: "Failed to upload photo" });
+    }
+  }
+);
+
+const deletePhotoSchema = z.object({
+  url: z.string().url(),
+});
+
+// Delete a photo
+router.delete("/photos", requireAuth, async (req: AuthRequest, res) => {
+  const parsed = deletePhotoSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
+  }
+
+  try {
+    const current = await pool.query(
+      "SELECT photos FROM profiles WHERE user_id = $1",
+      [req.userId]
+    );
+    if (current.rows.length === 0) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+    const existingPhotos: string[] = current.rows[0].photos || [];
+    const updatedPhotos = existingPhotos.filter((p) => p !== parsed.data.url);
+
+    const result = await pool.query(
+      "UPDATE profiles SET photos = $1, updated_at = NOW() WHERE user_id = $2 RETURNING *",
+      [updatedPhotos, req.userId]
+    );
+
+    try {
+      const match = parsed.data.url.match(/\/upload\/(?:v\d+\/)?(.+)\.[a-zA-Z0-9]+$/);
+      if (match && match[1]) {
+        await cloudinary.uploader.destroy(match[1]);
+      }
+    } catch (cloudErr) {
+      console.error("Cloudinary cleanup error (non-fatal):", cloudErr);
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("Delete photo error:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
