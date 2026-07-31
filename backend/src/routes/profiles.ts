@@ -21,6 +21,29 @@ const upload = multer({
 
 const MAX_PHOTOS = 6;
 
+function jitterCoordinate(lat: number, lng: number, radiusKm: number = 1): { latitude: number; longitude: number } {
+  const radiusInDegrees = radiusKm / 111;
+  const u = Math.random();
+  const v = Math.random();
+  const w = radiusInDegrees * Math.sqrt(u);
+  const t = 2 * Math.PI * v;
+  const deltaLat = w * Math.cos(t);
+  const deltaLng = (w * Math.sin(t)) / Math.cos((lat * Math.PI) / 180);
+  return { latitude: lat + deltaLat, longitude: lng + deltaLng };
+}
+
+// Converts a precise km value into a coarse display bucket so the
+// +/-1-2km noise introduced by jitterCoordinate() isn't presented
+// to users as a falsely precise number.
+function bucketDistanceKm(km: number | null | undefined): string | null {
+  if (km == null) return null;
+  if (km < 1) return "Nearby";
+  if (km < 5) return "5 km away";
+  const rounded = Math.round(km / 5) * 5;
+  return `${rounded} km away`;
+}
+
+
 // Get own profile
 router.get("/me", requireAuth, async (req: AuthRequest, res) => {
   try {
@@ -48,6 +71,39 @@ const updateSchema = z.object({
   incognitoMode: z.boolean().optional(),
   age: z.number().int().min(18).optional(),
   datingIntentions: z.string().optional(),
+
+  // Identity
+  preferredName: z.string().max(50).optional(),
+  beyondBinary: z.boolean().optional(),
+  identityTags: z.array(z.string()).optional(),
+
+  // Relationship
+  relationshipStructure: z.string().optional(),
+  interestedIn: z.array(z.string()).optional(),
+  agePrefMin: z.number().int().min(18).max(120).optional(),
+  agePrefMax: z.number().int().min(18).max(120).optional(),
+  distancePrefKm: z.number().int().min(1).max(500).optional(),
+
+  // Interests
+  interests: z.array(z.string()).max(15).optional(),
+
+  // Lifestyle
+  heightCm: z.number().int().min(100).max(250).optional(),
+  smoking: z.string().optional(),
+  drinking: z.string().optional(),
+  drugFriendly: z.string().optional(),
+  kids: z.string().optional(),
+  religion: z.string().optional(),
+  starSign: z.string().optional(),
+  education: z.string().optional(),
+  occupation: z.string().optional(),
+
+  // About & Safety
+  languages: z.array(z.string()).optional(),
+  hometown: z.string().optional(),
+  prompts: z.array(z.object({ question: z.string(), answer: z.string().max(300) })).max(3).optional(),
+  locationBlur: z.boolean().optional(),
+  communityTags: z.array(z.string()).optional(),
 });
 
 // Update own profile
@@ -58,6 +114,14 @@ router.patch("/me", requireAuth, async (req: AuthRequest, res) => {
   }
 
   const fields = parsed.data;
+  if (fields.prompts !== undefined) {
+    (fields as any).prompts = JSON.stringify(fields.prompts);
+  }
+  if (fields.latitude != null && fields.longitude != null) {
+    const jittered = jitterCoordinate(fields.latitude, fields.longitude, 1);
+    fields.latitude = jittered.latitude;
+    fields.longitude = jittered.longitude;
+  }
   const columnMap: Record<string, string> = {
     displayName: "display_name",
     bio: "bio",
@@ -71,6 +135,30 @@ router.patch("/me", requireAuth, async (req: AuthRequest, res) => {
     incognitoMode: "incognito_mode",
     age: "age",
     datingIntentions: "dating_intentions",
+
+    preferredName: "preferred_name",
+    beyondBinary: "beyond_binary",
+    identityTags: "identity_tags",
+    relationshipStructure: "relationship_structure",
+    interestedIn: "interested_in",
+    agePrefMin: "age_pref_min",
+    agePrefMax: "age_pref_max",
+    distancePrefKm: "distance_pref_km",
+    interests: "interests",
+    heightCm: "height_cm",
+    smoking: "smoking",
+    drinking: "drinking",
+    drugFriendly: "drug_friendly",
+    kids: "kids",
+    religion: "religion",
+    starSign: "star_sign",
+    education: "education",
+    occupation: "occupation",
+    languages: "languages",
+    hometown: "hometown",
+    prompts: "prompts",
+    locationBlur: "location_blur",
+    communityTags: "community_tags",
   };
 
   const setClauses: string[] = [];
@@ -199,21 +287,30 @@ const browseQuerySchema = z.object({
   minAge: z.coerce.number().int().min(18).optional(),
   maxAge: z.coerce.number().int().max(120).optional(),
   maxDistanceKm: z.coerce.number().positive().optional(),
+  relationshipStructure: z.string().optional(),
+  minHeightCm: z.coerce.number().int().min(100).optional(),
+  maxHeightCm: z.coerce.number().int().max(250).optional(),
+  minSharedInterests: z.coerce.number().int().min(0).optional(),
 });
 
 // Browse profiles (excluding self, blocked users, already-swiped users, and incognito users)
-// Ordered by: same dating-intentions first, then nearest distance
+// Ordered by: same dating-intentions first, then most shared interests, then nearest distance
 router.get("/browse", requireAuth, async (req: AuthRequest, res) => {
   const parsedQuery = browseQuerySchema.safeParse(req.query);
   if (!parsedQuery.success) {
     return res.status(400).json({ error: parsedQuery.error.flatten() });
   }
-  const { orientation, minAge, maxAge, maxDistanceKm } = parsedQuery.data;
+  const {
+    orientation, minAge, maxAge, maxDistanceKm,
+    relationshipStructure, minHeightCm, maxHeightCm, minSharedInterests,
+  } = parsedQuery.data;
 
   try {
-    // Fetch own profile for distance + dating-intentions ranking
+    // Fetch own profile for distance + dating-intentions ranking + reciprocal age-pref
     const selfResult = await pool.query(
-      "SELECT latitude, longitude, dating_intentions FROM profiles WHERE user_id = $1",
+      `SELECT latitude, longitude, dating_intentions, age,
+              age_pref_min, age_pref_max, interests
+       FROM profiles WHERE user_id = $1`,
       [req.userId]
     );
     if (selfResult.rows.length === 0) {
@@ -221,6 +318,7 @@ router.get("/browse", requireAuth, async (req: AuthRequest, res) => {
     }
     const self = selfResult.rows[0];
     const hasSelfLocation = self.latitude != null && self.longitude != null;
+    const selfInterests: string[] = self.interests || [];
 
     const values: any[] = [req.userId];
 
@@ -245,10 +343,23 @@ router.get("/browse", requireAuth, async (req: AuthRequest, res) => {
          ELSE NULL END) AS distance_km`;
     }
 
+    // Shared-interests count via array intersection (parameterized)
+    let sharedInterestsSql = "0 AS shared_interests";
+    if (selfInterests.length > 0) {
+      values.push(selfInterests);
+      const interestsIdx = values.length;
+      sharedInterestsSql = `
+        cardinality(ARRAY(
+          SELECT UNNEST(p.interests) INTERSECT SELECT UNNEST($${interestsIdx}::text[])
+        )) AS shared_interests`;
+    }
+
     let query = `
       SELECT p.user_id, p.display_name, p.bio, p.orientation, p.gender_identity,
              p.pronouns, p.photos, p.city, p.age, p.dating_intentions,
-             ${distanceSql}
+             p.relationship_structure, p.height_cm, p.interests,
+             ${distanceSql},
+             ${sharedInterestsSql}
       FROM profiles p
       WHERE p.user_id != $1
         AND p.incognito_mode = FALSE
@@ -274,15 +385,46 @@ router.get("/browse", requireAuth, async (req: AuthRequest, res) => {
       values.push(maxAge);
       query += ` AND p.age <= $${values.length}`;
     }
+    if (relationshipStructure) {
+      values.push(relationshipStructure);
+      query += ` AND p.relationship_structure = $${values.length}`;
+    }
+    if (minHeightCm !== undefined) {
+      values.push(minHeightCm);
+      query += ` AND p.height_cm >= $${values.length}`;
+    }
+    if (maxHeightCm !== undefined) {
+      values.push(maxHeightCm);
+      query += ` AND p.height_cm <= $${values.length}`;
+    }
+    // Reciprocal age-preference: self's age must fit their range, and their age must fit self's range
+    if (self.age != null) {
+      values.push(self.age);
+      query += ` AND (p.age_pref_min IS NULL OR p.age_pref_min <= $${values.length})`;
+      values.push(self.age);
+      query += ` AND (p.age_pref_max IS NULL OR p.age_pref_max >= $${values.length})`;
+    }
+    if (self.age_pref_min != null) {
+      values.push(self.age_pref_min);
+      query += ` AND (p.age IS NULL OR p.age >= $${values.length})`;
+    }
+    if (self.age_pref_max != null) {
+      values.push(self.age_pref_max);
+      query += ` AND (p.age IS NULL OR p.age <= $${values.length})`;
+    }
 
-    // Wrap for optional maxDistanceKm filter (needs the computed alias)
+    // Wrap for optional maxDistanceKm / minSharedInterests filters (need computed aliases)
     let finalQuery = `SELECT * FROM (${query}) sub WHERE 1=1`;
     if (maxDistanceKm !== undefined && hasSelfLocation) {
       values.push(maxDistanceKm);
       finalQuery += ` AND (sub.distance_km IS NULL OR sub.distance_km <= $${values.length})`;
     }
+    if (minSharedInterests !== undefined) {
+      values.push(minSharedInterests);
+      finalQuery += ` AND sub.shared_interests >= $${values.length}`;
+    }
 
-    // Rank same dating-intentions higher, using a bound parameter (not string interpolation)
+    // Rank same dating-intentions higher, then more shared interests, then nearest
     let intentionsRankExpr = "1";
     if (self.dating_intentions) {
       values.push(self.dating_intentions);
@@ -290,12 +432,18 @@ router.get("/browse", requireAuth, async (req: AuthRequest, res) => {
     }
 
     finalQuery += `
-      ORDER BY ${intentionsRankExpr} ASC, sub.distance_km ASC NULLS LAST
+      ORDER BY ${intentionsRankExpr} ASC, sub.shared_interests DESC, sub.distance_km ASC NULLS LAST
       LIMIT 50
     `;
 
     const result = await pool.query(finalQuery, values);
-    res.json(result.rows);
+    // Sorting above already used precise distance_km; here we only
+    // replace the field we SEND to the client with a coarse bucket.
+    const bucketedRows = result.rows.map((row: any) => ({
+      ...row,
+      distance_km: bucketDistanceKm(row.distance_km),
+    }));
+    res.json(bucketedRows);
   } catch (err) {
     console.error("Browse profiles error:", err);
     res.status(500).json({ error: "Internal server error" });

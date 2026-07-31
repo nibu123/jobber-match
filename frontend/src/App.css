@@ -1,0 +1,4 @@
+/* Page-level layout tweaks. Core theme (colors, cards, buttons) lives in index.css */
+#root {
+  min-height: 100vh;
+}

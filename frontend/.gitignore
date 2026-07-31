@@ -1,6 +1,8 @@
 node_modules/
 dist/
 .env
-*.log
+.env.local
+.env.*.local
 *.bak
 *.bak2
+.vercel
