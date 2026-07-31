@@ -13,6 +13,8 @@ const signupSchema = z.object({
   orientation: z.string().min(1),
   genderIdentity: z.string().min(1),
   pronouns: z.string().optional(),
+  age: z.number().int().min(18, "You must be 18 or older to use this app"),
+  datingIntentions: z.string().optional(),
 });
 
 router.post("/signup", async (req, res) => {
@@ -21,7 +23,8 @@ router.post("/signup", async (req, res) => {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
 
-  const { email, password, displayName, orientation, genderIdentity, pronouns } = parsed.data;
+  const { email, password, displayName, orientation, genderIdentity, pronouns, age, datingIntentions } =
+    parsed.data;
 
   try {
     const existing = await pool.query("SELECT id FROM users WHERE email = $1", [email]);
@@ -38,9 +41,9 @@ router.post("/signup", async (req, res) => {
     const userId = userResult.rows[0].id;
 
     await pool.query(
-      `INSERT INTO profiles (user_id, display_name, orientation, gender_identity, pronouns)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [userId, displayName, orientation, genderIdentity, pronouns || null]
+      `INSERT INTO profiles (user_id, display_name, orientation, gender_identity, pronouns, age, dating_intentions)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [userId, displayName, orientation, genderIdentity, pronouns || null, age, datingIntentions || null]
     );
 
     const token = jwt.sign({ userId }, process.env.JWT_SECRET as string, {
