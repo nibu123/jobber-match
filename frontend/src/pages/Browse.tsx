@@ -46,22 +46,25 @@ export default function Browse() {
     setShowDetail(false);
   }, [current?.user_id]);
 
-  async function commitSwipe(targetUserId: string, action: "like" | "pass" | "superlike") {
+async function commitSwipe(targetUserId: string, action: "like" | "pass" | "superlike") {
     if (swiping) return;
     setSwiping(true);
+    const swipedProfile = profiles.find((p) => p.user_id === targetUserId) || null;
+    setProfiles((prev) => prev.filter((p) => p.user_id !== targetUserId));
+    setDragX(0);
+    setExiting(null);
+    setSwiping(false);
     try {
       const res = await api.post("/swipes", { targetUserId, action });
       if (res.data.matched) {
-        setMatchMessage("It's a match! 🎉");
+        setMatchMessage("It's a match! \u{1F389}");
         setTimeout(() => setMatchMessage(""), 2500);
       }
-      setProfiles((prev) => prev.filter((p) => p.user_id !== targetUserId));
     } catch (err) {
       console.error("Swipe failed", err);
-    } finally {
-      setSwiping(false);
-      setDragX(0);
-      setExiting(null);
+      if (swipedProfile) {
+        setProfiles((prev) => [swipedProfile, ...prev]);
+      }
     }
   }
 
@@ -69,7 +72,7 @@ export default function Browse() {
     if (!current || swiping || exiting) return;
     if (action === "like" || action === "pass") {
       setExiting(action);
-      setTimeout(() => commitSwipe(current.user_id, action), 300);
+      setTimeout(() => commitSwipe(current.user_id, action), 200);
     } else {
       commitSwipe(current.user_id, action);
     }
@@ -108,10 +111,10 @@ export default function Browse() {
     if (!current) return;
     if (dragX > SWIPE_THRESHOLD) {
       setExiting("like");
-      setTimeout(() => commitSwipe(current.user_id, "like"), 300);
+      setTimeout(() => commitSwipe(current.user_id, "like"), 200);
     } else if (dragX < -SWIPE_THRESHOLD) {
       setExiting("pass");
-      setTimeout(() => commitSwipe(current.user_id, "pass"), 300);
+      setTimeout(() => commitSwipe(current.user_id, "pass"), 200);
     } else {
       setDragX(0);
     }
@@ -133,7 +136,7 @@ export default function Browse() {
     ? {
         transform: `translateX(${exiting === "like" ? 600 : -600}px) rotate(${exiting === "like" ? 30 : -30}deg)`,
         opacity: 0,
-        transition: "transform 0.3s ease, opacity 0.3s ease",
+        transition: "transform 0.2s ease, opacity 0.2s ease",
       }
     : dragging
     ? { transform: `translateX(${dragX}px) rotate(${rotation}deg)`, transition: "none" }
@@ -432,6 +435,7 @@ export default function Browse() {
     </div>
   );
 }
+
 
 
 
