@@ -899,3 +899,25 @@ input, select, textarea {
   color: #ffffff;
   backdrop-filter: blur(6px);
 }
+
+/* ===== Pride flag waving background ===== */
+.pride-flag-bg {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.09;
+  overflow: hidden;
+}
+
+.pride-flag-bg svg {
+  width: 100%;
+  height: 100%;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}

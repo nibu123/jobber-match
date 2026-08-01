@@ -6,6 +6,7 @@ import Browse from "./pages/Browse";
 import Matches from "./pages/Matches";
 import Profile from "./pages/Profile";
 import "./App.css";
+import PrideFlag from "./components/PrideFlag";
 
 function RequireAuth({ children }: { children: React.JSX.Element }) {
   const { token } = useAuth();
@@ -15,7 +16,11 @@ function RequireAuth({ children }: { children: React.JSX.Element }) {
 
 export default function App() {
   return (
-    <Routes>
+    <>
+      <div className="pride-flag-bg">
+        <PrideFlag />
+      </div>
+      <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route
@@ -43,7 +48,9 @@ export default function App() {
         }
       />
       <Route path="*" element={<Navigate to="/browse" replace />} />
-    </Routes>
+      </Routes>
+    </>
   );
 }
+
 
