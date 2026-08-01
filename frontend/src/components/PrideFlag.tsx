@@ -5,7 +5,7 @@ export default function PrideFlag() {
         <filter id="waveFilter" x="-20%" y="-20%" width="140%" height="140%">
           <feTurbulence
             type="fractalNoise"
-            baseFrequency="0.008 0.04"
+            baseFrequency="0.004 0.02"
             numOctaves="2"
             seed="7"
             result="noise"
@@ -17,7 +17,7 @@ export default function PrideFlag() {
               repeatCount="indefinite"
             />
           </feTurbulence>
-          <feDisplacementMap in="SourceGraphic" in2="noise" scale="26" xChannelSelector="R" yChannelSelector="G" />
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="15" xChannelSelector="R" yChannelSelector="G" />
         </filter>
       </defs>
       <g filter="url(#waveFilter)">
@@ -31,3 +31,4 @@ export default function PrideFlag() {
     </svg>
   );
 }
+

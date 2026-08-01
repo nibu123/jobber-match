@@ -908,7 +908,7 @@ input, select, textarea {
   height: 100%;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.09;
+  opacity: 0.05;
   overflow: hidden;
 }
 
@@ -921,3 +921,4 @@ input, select, textarea {
   position: relative;
   z-index: 1;
 }
+
