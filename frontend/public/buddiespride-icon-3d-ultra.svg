@@ -1,31 +1,30 @@
 <svg width="140" height="140" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <clipPath id="hci">
+    <clipPath id="hci2">
       <path d="M70 130 C10 90 0 55 20 32 C38 12 62 15 70 35 C78 15 102 12 120 32 C140 55 130 90 70 130 Z"/>
     </clipPath>
-    <linearGradient id="topLightI" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="topLightI2" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.55"/>
       <stop offset="30%" stop-color="#FFFFFF" stop-opacity="0.05"/>
       <stop offset="65%" stop-color="#000000" stop-opacity="0.05"/>
       <stop offset="100%" stop-color="#000000" stop-opacity="0.45"/>
     </linearGradient>
-    <radialGradient id="bigShineI" cx="32%" cy="20%" r="42%">
+    <radialGradient id="bigShineI2" cx="32%" cy="20%" r="42%">
       <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.95"/>
       <stop offset="55%" stop-color="#FFFFFF" stop-opacity="0.15"/>
       <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="smallShineI" cx="50%" cy="50%" r="50%">
+    <radialGradient id="smallShineI2" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.9"/>
       <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="bounceI" cx="65%" cy="82%" r="35%">
+    <radialGradient id="bounceI2" cx="65%" cy="82%" r="35%">
       <stop offset="0%" stop-color="#FFED00" stop-opacity="0.35"/>
       <stop offset="100%" stop-color="#FFED00" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <rect width="140" height="140" rx="28" fill="#1A1A2E"/>
   <g transform="translate(10,5)">
-    <g clip-path="url(#hci)">
+    <g clip-path="url(#hci2)">
       <rect x="-10" y="0" width="150" height="16.25" fill="#FF69B4"/>
       <rect x="-10" y="16.25" width="150" height="16.25" fill="#E40303"/>
       <rect x="-10" y="32.5" width="150" height="16.25" fill="#FF8C00"/>
@@ -34,11 +33,11 @@
       <rect x="-10" y="81.25" width="150" height="16.25" fill="#24408E"/>
       <rect x="-10" y="97.5" width="150" height="16.25" fill="#732982"/>
       <rect x="-10" y="113.75" width="150" height="16.25" fill="#8B4513"/>
-      <path d="M70 130 C10 90 0 55 20 32 C38 12 62 15 70 35 C78 15 102 12 120 32 C140 55 130 90 70 130 Z" fill="url(#bounceI)"/>
-      <path d="M70 130 C10 90 0 55 20 32 C38 12 62 15 70 35 C78 15 102 12 120 32 C140 55 130 90 70 130 Z" fill="url(#topLightI)"/>
-      <ellipse cx="40" cy="38" rx="28" ry="17" fill="url(#bigShineI)" transform="rotate(-28 40 38)"/>
-      <circle cx="30" cy="30" r="5.5" fill="url(#smallShineI)"/>
+      <path d="M70 130 C10 90 0 55 20 32 C38 12 62 15 70 35 C78 15 102 12 120 32 C140 55 130 90 70 130 Z" fill="url(#bounceI2)"/>
+      <path d="M70 130 C10 90 0 55 20 32 C38 12 62 15 70 35 C78 15 102 12 120 32 C140 55 130 90 70 130 Z" fill="url(#topLightI2)"/>
+      <ellipse cx="40" cy="38" rx="28" ry="17" fill="url(#bigShineI2)" transform="rotate(-28 40 38)"/>
+      <circle cx="30" cy="30" r="5.5" fill="url(#smallShineI2)"/>
     </g>
-    <path d="M70 130 C10 90 0 55 20 32 C38 12 62 15 70 35 C78 15 102 12 120 32 C140 55 130 90 70 130 Z" fill="none" stroke="#FFFFFF" stroke-width="1.5" opacity="0.45"/>
+    <path d="M70 130 C10 90 0 55 20 32 C38 12 62 15 70 35 C78 15 102 12 120 32 C140 55 130 90 70 130 Z" fill="none" stroke="#1A1A2E" stroke-width="1.5" opacity="0.25"/>
   </g>
 </svg>
