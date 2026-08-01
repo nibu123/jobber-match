@@ -56,10 +56,20 @@ a {
 
 .brand {
   font-family: "Bricolage Grotesque", sans-serif;
-  font-size: 26px;
+  font-size: 30px;
   font-weight: 800;
-  color: var(--text);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
+  background: linear-gradient(90deg, #FF69B4, #E40303, #FF8C00, #FFED00, #008026, #24408E, #732982);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: brandShine 6s linear infinite;
+}
+
+@keyframes brandShine {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
 }
 
 .brand::after {
