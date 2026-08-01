@@ -20,7 +20,7 @@
 }
 
 .disp {
-  font-family: "Bricolage Grotesque", sans-serif;
+  font-family: "Fredoka", sans-serif;
 }
 
 .serif-i {
@@ -55,7 +55,7 @@ a {
 }
 
 .brand {
-  font-family: "Bricolage Grotesque", sans-serif;
+  font-family: "Fredoka", sans-serif;
   font-size: 30px;
   font-weight: 800;
   letter-spacing: -0.01em;
@@ -65,6 +65,7 @@ a {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: brandShine 6s linear infinite;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 
 @keyframes brandShine {
@@ -133,7 +134,7 @@ a {
   padding: 13px 20px;
   font-size: 15px;
   font-weight: 700;
-  font-family: "Bricolage Grotesque", sans-serif;
+  font-family: "Fredoka", sans-serif;
   cursor: pointer;
   width: 100%;
 }
@@ -186,7 +187,7 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: "Bricolage Grotesque", sans-serif;
+  font-family: "Fredoka", sans-serif;
   font-weight: 800;
   font-size: 20px;
   color: var(--bg-deep);
@@ -225,7 +226,7 @@ nav.tabbar a {
   font-size: 13px;
   font-weight: 600;
   text-align: center;
-  font-family: "Bricolage Grotesque", sans-serif;
+  font-family: "Fredoka", sans-serif;
 }
 
 nav.tabbar a.active {
@@ -383,7 +384,7 @@ input, select, textarea {
 }
 
 .swipe-name {
-  font-family: "Bricolage Grotesque", sans-serif;
+  font-family: "Fredoka", sans-serif;
   font-weight: 700;
   font-size: 24px;
 }
@@ -769,7 +770,7 @@ input, select, textarea {
 .swipe-stamp {
   position: absolute;
   top: 28px;
-  font-family: "Bricolage Grotesque", sans-serif;
+  font-family: "Fredoka", sans-serif;
   font-weight: 800;
   font-size: 30px;
   letter-spacing: 2px;
@@ -854,7 +855,7 @@ input, select, textarea {
 }
 
 .detail-name {
-  font-family: "Bricolage Grotesque", sans-serif;
+  font-family: "Fredoka", sans-serif;
   font-weight: 700;
   font-size: 26px;
 }
