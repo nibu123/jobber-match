@@ -2,45 +2,59 @@ export default function PrideFlag() {
   return (
     <svg viewBox="0 0 800 480" preserveAspectRatio="xMidYMid slice">
       <defs>
-        <linearGradient id="silkRainbow" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#ff2d55" />
-          <stop offset="16%" stopColor="#ff8c00" />
-          <stop offset="33%" stopColor="#ffed00" />
-          <stop offset="50%" stopColor="#3ddc84" />
-          <stop offset="66%" stopColor="#00b4ff" />
-          <stop offset="83%" stopColor="#5b5bff" />
-          <stop offset="100%" stopColor="#a259ff" />
-        </linearGradient>
-
-        <filter id="silkWave" x="-30%" y="-30%" width="160%" height="160%">
+        <filter id="cloudFilter" x="-40%" y="-40%" width="180%" height="180%">
           <feTurbulence
-            type="fractalNoise"
-            baseFrequency="0.006 0.012"
+            type="turbulence"
+            baseFrequency="0.010 0.015"
             numOctaves="3"
-            seed="11"
+            seed="4"
             result="noise"
           >
             <animate
-              attributeName="baseFrequency"
-              dur="18s"
-              values="0.006 0.012;0.009 0.018;0.006 0.012"
+              attributeName="seed"
+              dur="30s"
+              values="4;9;4"
               repeatCount="indefinite"
             />
           </feTurbulence>
-          <feDisplacementMap in="SourceGraphic" in2="noise" scale="60" xChannelSelector="R" yChannelSelector="G" />
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="80" xChannelSelector="R" yChannelSelector="G" result="displaced" />
+          <feGaussianBlur in="displaced" stdDeviation="18" />
         </filter>
 
-        <radialGradient id="sheen" cx="30%" cy="20%" r="80%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.35" />
-          <stop offset="45%" stopColor="#ffffff" stopOpacity="0.08" />
-          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+        <radialGradient id="blobRed" cx="15%" cy="35%" r="45%">
+          <stop offset="0%" stopColor="#ff2d55" stopOpacity="1" />
+          <stop offset="100%" stopColor="#ff2d55" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="blobOrange" cx="32%" cy="55%" r="45%">
+          <stop offset="0%" stopColor="#ff9500" stopOpacity="1" />
+          <stop offset="100%" stopColor="#ff9500" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="blobYellow" cx="48%" cy="30%" r="42%">
+          <stop offset="0%" stopColor="#ffe600" stopOpacity="1" />
+          <stop offset="100%" stopColor="#ffe600" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="blobGreen" cx="62%" cy="60%" r="45%">
+          <stop offset="0%" stopColor="#2ee6a6" stopOpacity="1" />
+          <stop offset="100%" stopColor="#2ee6a6" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="blobBlue" cx="78%" cy="35%" r="45%">
+          <stop offset="0%" stopColor="#00baff" stopOpacity="1" />
+          <stop offset="100%" stopColor="#00baff" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="blobPurple" cx="90%" cy="60%" r="42%">
+          <stop offset="0%" stopColor="#a259ff" stopOpacity="1" />
+          <stop offset="100%" stopColor="#a259ff" stopOpacity="0" />
         </radialGradient>
       </defs>
 
-      <g filter="url(#silkWave)">
-        <rect x="0" y="0" width="800" height="480" fill="url(#silkRainbow)" />
+      <g filter="url(#cloudFilter)">
+        <rect x="0" y="0" width="800" height="480" fill="url(#blobRed)" />
+        <rect x="0" y="0" width="800" height="480" fill="url(#blobOrange)" />
+        <rect x="0" y="0" width="800" height="480" fill="url(#blobYellow)" />
+        <rect x="0" y="0" width="800" height="480" fill="url(#blobGreen)" />
+        <rect x="0" y="0" width="800" height="480" fill="url(#blobBlue)" />
+        <rect x="0" y="0" width="800" height="480" fill="url(#blobPurple)" />
       </g>
-      <rect x="0" y="0" width="800" height="480" fill="url(#sheen)" />
     </svg>
   );
 }
