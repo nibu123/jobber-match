@@ -940,9 +940,10 @@ input, select, textarea {
   content: "";
   position: absolute;
   inset: -50px;
-  background: radial-gradient(circle at center, rgba(255, 45, 149, 0.5) 0%, rgba(255, 45, 149, 0) 70%);
+  background: radial-gradient(circle at center, rgba(255, 45, 149, 0.8) 0%, rgba(255, 45, 149, 0.3) 40%, rgba(255, 45, 149, 0) 75%);
   filter: blur(35px);
   z-index: -1;
   border-radius: 40px;
   pointer-events: none;
 }
+
