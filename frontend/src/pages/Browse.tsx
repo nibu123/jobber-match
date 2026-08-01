@@ -22,7 +22,6 @@ export default function Browse() {
   const [matchMessage, setMatchMessage] = useState("");
   const [photoIndex, setPhotoIndex] = useState(0);
   const [showDetail, setShowDetail] = useState(false);
-  const [photoRevealed, setPhotoRevealed] = useState(false);
 
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
@@ -45,7 +44,6 @@ export default function Browse() {
   useEffect(() => {
     setPhotoIndex(0);
     setShowDetail(false);
-    setPhotoRevealed(false);
   }, [current?.user_id]);
 
   async function commitSwipe(targetUserId: string, action: "like" | "pass" | "superlike") {
@@ -69,9 +67,6 @@ export default function Browse() {
 
   function handleButtonSwipe(action: "like" | "pass" | "superlike") {
     if (!current || swiping || exiting) return;
-    if (action === "like" || action === "superlike") {
-      setPhotoRevealed(true);
-    }
     if (action === "like" || action === "pass") {
       setExiting(action);
       setTimeout(() => commitSwipe(current.user_id, action), 300);
@@ -112,7 +107,6 @@ export default function Browse() {
     setDragging(false);
     if (!current) return;
     if (dragX > SWIPE_THRESHOLD) {
-      setPhotoRevealed(true);
       setExiting("like");
       setTimeout(() => commitSwipe(current.user_id, "like"), 300);
     } else if (dragX < -SWIPE_THRESHOLD) {
@@ -306,29 +300,28 @@ export default function Browse() {
                   alt={current.display_name}
                   draggable={false}
                   style={{
-                    filter: photoRevealed ? "none" : "blur(22px)",
-                    transform: photoRevealed ? "scale(1)" : "scale(1.08)",
-                    transition: "filter 0.4s ease, transform 0.4s ease",
+                    filter: "blur(22px)",
+                    transform: "scale(1.08)",
                   }}
                 />
-                {!photoRevealed && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#fff",
-                      fontSize: 14,
-                      fontWeight: 600,
-                      textShadow: "0 1px 4px rgba(0,0,0,0.6)",
-                      pointerEvents: "none",
-                    }}
-                  >
-                    ♥ Like to reveal photo
-                  </div>
-                )}
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#fff",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    textAlign: "center",
+                    padding: "0 30px",
+                    textShadow: "0 1px 4px rgba(0,0,0,0.6)",
+                    pointerEvents: "none",
+                  }}
+                >
+                  Photo reveals only if you both choose to, after matching
+                </div>
               </>
             ) : (
               <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, background: "var(--surface-hover)" }}>
@@ -434,4 +427,6 @@ export default function Browse() {
     </div>
   );
 }
+
+
 
