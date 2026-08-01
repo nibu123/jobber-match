@@ -282,26 +282,45 @@ export default function Profile() {
 
   return (
     <div className="container">
-      <div style={{ margin: "24px 0 16px" }}>
+      <div style={{ margin: "24px 0 16px", textAlign: "center" }}>
         <div className="brand">Your Profile</div>
       </div>
 
-      <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto" }}>
+      <div className="profile-preview-card">
+        <div className="swipe-photo-wrap profile-preview-photo">
+          {profile.photos && profile.photos.length > 0 ? (
+            <img src={profile.photos[0]} alt={profile.display_name} />
+          ) : (
+            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--surface-hover)" }}>
+              <div className="avatar" style={{ width: 96, height: 96, fontSize: 36 }}>
+                {profile.display_name.charAt(0).toUpperCase()}
+              </div>
+            </div>
+          )}
+          <div className="swipe-overlay">
+            <div className="swipe-name">
+              {profile.display_name}{" "}
+              {profile.pronouns && (
+                <span style={{ color: "rgba(255,255,255,0.75)", fontWeight: 400, fontSize: 16 }}>
+                  ({profile.pronouns})
+                </span>
+              )}
+            </div>
+            <div className="swipe-tags">
+              {profile.orientation && <span className="tag">{profile.orientation}</span>}
+              {profile.city && <span className="tag">{profile.city}</span>}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="profile-tabs">
         {TABS.map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => setTab(t.id)}
-            style={{
-              padding: "8px 14px",
-              borderRadius: 8,
-              border: "none",
-              whiteSpace: "nowrap",
-              background: tab === t.id ? "var(--accent, #a78bfa)" : "transparent",
-              color: tab === t.id ? "#fff" : "var(--text-muted)",
-              cursor: "pointer",
-              fontSize: 14,
-            }}
+            className={"profile-tab" + (tab === t.id ? " active" : "")}
           >
             {t.label}
           </button>
