@@ -58,7 +58,9 @@ router.get("/", requireAuth, async (req: AuthRequest, res) => {
     const result = await pool.query(
       `SELECT m.id, m.status, m.created_at,
               CASE WHEN m.user_a = $1 THEN m.user_b ELSE m.user_a END AS other_user_id,
-              p.display_name, p.photos
+              p.display_name, p.photos,
+              CASE WHEN m.user_a = $1 THEN m.photo_revealed_a ELSE m.photo_revealed_b END AS my_photo_revealed,
+              CASE WHEN m.user_a = $1 THEN m.photo_revealed_b ELSE m.photo_revealed_a END AS their_photo_revealed
        FROM matches m
        JOIN profiles p ON p.user_id = CASE WHEN m.user_a = $1 THEN m.user_b ELSE m.user_a END
        WHERE (m.user_a = $1 OR m.user_b = $1) AND m.status = 'accepted'
@@ -72,4 +74,31 @@ router.get("/", requireAuth, async (req: AuthRequest, res) => {
   }
 });
 
+// Reveal own photo for a specific match
+router.post("/:matchId/reveal-photo", requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const matchResult = await pool.query(
+      `SELECT user_a, user_b FROM matches WHERE id = $1 AND status = 'accepted'`,
+      [req.params.matchId]
+    );
+    if (matchResult.rows.length === 0) {
+      return res.status(404).json({ error: "Match not found" });
+    }
+    const match = matchResult.rows[0];
+    if (match.user_a !== req.userId && match.user_b !== req.userId) {
+      return res.status(403).json({ error: "Not part of this match" });
+    }
+    const column = match.user_a === req.userId ? "photo_revealed_a" : "photo_revealed_b";
+    const result = await pool.query(
+      `UPDATE matches SET ${column} = true WHERE id = $1 RETURNING *`,
+      [req.params.matchId]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("Reveal photo error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 export default router;
+
