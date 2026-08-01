@@ -219,6 +219,7 @@ export default function Onboarding() {
         <div className="onb-orb onb-orb-2" />
         <div className="onb-orb onb-orb-3" />
       </div>
+      <div className="onb-grain" />
       {finished && <canvas ref={canvasRef} className="onb-confetti-canvas" />}
 
       <div className="onb-shell">
@@ -376,3 +377,4 @@ export default function Onboarding() {
     </div>
   );
 }
+

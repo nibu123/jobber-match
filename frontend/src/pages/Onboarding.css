@@ -39,16 +39,16 @@
 .onb-topbar { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 0; flex-shrink: 0; }
 .onb-icon-btn { background: rgba(246,241,232,0.06); border: 1px solid rgba(246,241,232,0.1); color: var(--onb-paper); width: 36px; height: 36px; border-radius: 50%; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.15s ease; }
 .onb-icon-btn:active { transform: scale(0.9); }
-.onb-skip-btn { background: none; border: none; color: var(--onb-paper); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; opacity: 0.55; }
+.onb-skip-btn { background: none; border: none; color: var(--onb-paper); font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; opacity: 0.55; }
 .onb-skip-btn:hover { opacity: 1; }
 
 .onb-content { flex: 1; padding: 22px 24px 12px; overflow-y: auto; }
 .onb-step-anim { animation: onbStepIn 0.45s cubic-bezier(.22,1,.36,1); }
 @keyframes onbStepIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 
-.onb-eyebrow { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--onb-teal); margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+.onb-eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--onb-teal); margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
 .onb-eyebrow::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--onb-teal); box-shadow: 0 0 8px var(--onb-teal); }
-.onb-h1 { font-weight: 300; font-size: 33px; line-height: 1.1; margin: 0 0 10px; letter-spacing: -0.01em; }
+.onb-h1 { font-family: 'Fraunces', serif; font-weight: 300; font-size: 33px; line-height: 1.1; margin: 0 0 10px; letter-spacing: -0.01em; }
 .onb-h1 em { color: var(--onb-gold); font-style: italic; }
 .onb-subtext { font-size: 14.5px; color: rgba(246,241,232,0.6); line-height: 1.55; margin: 0 0 26px; }
 
@@ -113,3 +113,14 @@
 @keyframes onbPopIn { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.15); opacity: 1; } 100% { transform: scale(1); } }
 
 .onb-confetti-canvas { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
+
+
+/* ===== Grain texture overlay (matches reference design) ===== */
+.onb-grain {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
