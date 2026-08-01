@@ -360,23 +360,25 @@ export default function Browse() {
             >
               ✕
             </button>
+
+            <div className="photo-gradient-overlay" />
+            <div className="photo-name-overlay">
+              <div className="detail-name">
+                {current.display_name}{" "}
+                {current.pronouns && (
+                  <span style={{ color: "rgba(255,255,255,0.75)", fontWeight: 400, fontSize: 18 }}>
+                    ({current.pronouns})
+                  </span>
+                )}
+              </div>
+              <div className="swipe-tags" style={{ margin: "10px 0" }}>
+                <span className="tag">{current.orientation}</span>
+                {current.city && <span className="tag">{current.city}</span>}
+              </div>
+            </div>
           </div>
 
           <div className="profile-detail-info">
-            <div className="detail-name">
-              {current.display_name}{" "}
-              {current.pronouns && (
-                <span style={{ color: "var(--text-muted)", fontWeight: 400, fontSize: 18 }}>
-                  ({current.pronouns})
-                </span>
-              )}
-            </div>
-
-            <div className="swipe-tags" style={{ margin: "10px 0" }}>
-              <span className="tag">{current.orientation}</span>
-              {current.city && <span className="tag">{current.city}</span>}
-            </div>
-
             {current.bio && (
               <>
                 <div className="detail-section-label">About</div>
@@ -432,3 +434,4 @@ export default function Browse() {
     </div>
   );
 }
+
