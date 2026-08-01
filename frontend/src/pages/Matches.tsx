@@ -12,6 +12,8 @@ interface MatchSummary {
   other_user_id: string;
   display_name: string;
   photos: string[] | null;
+  my_photo_revealed: boolean;
+  their_photo_revealed: boolean;
 }
 
 interface Message {
@@ -70,6 +72,19 @@ export default function Matches() {
     getSocket()?.emit("join_match", match.id);
   }
 
+  async function revealMyPhoto() {
+    if (!activeMatch || activeMatch.my_photo_revealed) return;
+    try {
+      await api.post(`/matches/${activeMatch.id}/reveal-photo`);
+      setActiveMatch({ ...activeMatch, my_photo_revealed: true });
+      setMatches((prev) =>
+        prev.map((m) => (m.id === activeMatch.id ? { ...m, my_photo_revealed: true } : m))
+      );
+    } catch (err) {
+      console.error("Failed to reveal photo", err);
+    }
+  }
+
   function sendMessage(e: FormEvent) {
     e.preventDefault();
     if (!draft.trim() || !activeMatch) return;
@@ -80,12 +95,52 @@ export default function Matches() {
   if (activeMatch) {
     return (
       <div className="container" style={{ display: "flex", flexDirection: "column", height: "100vh", paddingBottom: 90 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 0" }}>
-          <button className="btn btn-secondary" style={{ width: "auto", padding: "8px 12px" }} onClick={() => setActiveMatch(null)}>
-            ← Back
+        <div className="chat-header">
+          <button className="chat-back" onClick={() => setActiveMatch(null)} aria-label="Back">
+            &#8249;
           </button>
-          <div style={{ fontWeight: 600 }}>{activeMatch.display_name}</div>
+          <div className="chat-avatar">
+            {activeMatch.photos && activeMatch.photos.length > 0 ? (
+              <img
+                src={activeMatch.photos[0]}
+                alt={activeMatch.display_name}
+                style={{
+                  filter: activeMatch.their_photo_revealed ? "none" : "blur(10px)",
+                  transition: "filter 0.4s ease",
+                }}
+              />
+            ) : (
+              <div className="avatar">{activeMatch.display_name.charAt(0).toUpperCase()}</div>
+            )}
+          </div>
+          <div className="chat-name">{activeMatch.display_name}</div>
         </div>
+
+        {!activeMatch.my_photo_revealed && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10,
+              padding: "10px 16px",
+              background: "var(--surface-hover)",
+              borderBottom: "1px solid var(--border)",
+            }}
+          >
+            <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
+              Your photo is hidden from {activeMatch.display_name}
+            </span>
+            <button
+              type="button"
+              onClick={revealMyPhoto}
+              className="tag"
+              style={{ cursor: "pointer", border: "none", flexShrink: 0 }}
+            >
+              Reveal my photo
+            </button>
+          </div>
+        )}
 
         <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
           {messages.map((m) => (
@@ -96,16 +151,15 @@ export default function Matches() {
           <div ref={bottomRef} />
         </div>
 
-        <form onSubmit={sendMessage} style={{ display: "flex", gap: 8, paddingTop: 10 }}>
+        <form onSubmit={sendMessage} className="chat-input-bar">
           <input
-            className="field"
-            style={{ flex: 1, background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 10, padding: "11px 12px", color: "var(--text)" }}
+            className="chat-input"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Type a message..."
           />
-          <button className="btn btn-primary" style={{ width: "auto", padding: "0 20px" }} type="submit">
-            Send
+          <button className="chat-send-btn" type="submit" aria-label="Send">
+            &#10148;
           </button>
         </form>
       </div>
@@ -114,7 +168,7 @@ export default function Matches() {
 
   return (
     <div className="container">
-      <div style={{ margin: "24px 0 16px" }}>
+      <div style={{ margin: "24px 0 16px", textAlign: "center" }}>
         <div className="brand">Matches</div>
       </div>
 
@@ -126,14 +180,25 @@ export default function Matches() {
         </p>
       )}
 
-      <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+      <div className="matches-list">
         {matches.map((m) => (
-          <div key={m.id} className="profile-card" onClick={() => openChat(m)}>
-            <div className="avatar">{m.display_name.charAt(0).toUpperCase()}</div>
-            <div>
-              <div style={{ fontWeight: 600 }}>{m.display_name}</div>
-              <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Tap to chat</div>
+          <div key={m.id} className="match-row" onClick={() => openChat(m)}>
+            <div className="match-avatar">
+              {m.photos && m.photos.length > 0 ? (
+                <img
+                  src={m.photos[0]}
+                  alt={m.display_name}
+                  style={{ filter: m.their_photo_revealed ? "none" : "blur(6px)" }}
+                />
+              ) : (
+                <div className="avatar">{m.display_name.charAt(0).toUpperCase()}</div>
+              )}
             </div>
+            <div className="match-info">
+              <div className="match-name">{m.display_name}</div>
+              <div className="match-sub">Tap to chat</div>
+            </div>
+            <div className="match-chevron">&#8250;</div>
           </div>
         ))}
       </div>
@@ -142,4 +207,6 @@ export default function Matches() {
     </div>
   );
 }
+
+
 
