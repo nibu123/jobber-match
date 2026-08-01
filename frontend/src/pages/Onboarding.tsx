@@ -3,34 +3,18 @@ import { useNavigate } from "react-router-dom";
 import api from "../api/client";
 import "./Onboarding.css";
 
-const ORIENTATIONS = ["Straight", "Gay", "Lesbian", "Bisexual", "Asexual", "Demisexual", "Pansexual", "Queer"];
-const LOOKING_FOR = [
-  { key: "long_partner", emoji: "\u{1F498}", label: "Long-term partner" },
-  { key: "long_short_ok", emoji: "\u{1F60D}", label: "Long-term, but short-term OK" },
-  { key: "short_long_ok", emoji: "\u{1F942}", label: "Short-term, but long-term OK" },
-  { key: "short_fun", emoji: "\u{1F389}", label: "Short-term fun" },
-  { key: "friends", emoji: "\u{1F44B}", label: "New friends" },
-  { key: "figuring_out", emoji: "\u{1F914}", label: "Still figuring it out" },
-];
-const GENDERS = ["Man", "Woman", "Trans man", "Trans woman", "Non-binary", "Genderfluid"];
 const INTERESTED_IN = ["Men", "Women", "Everyone"];
 const INTERESTS = [
   "Chai addict", "Bollywood", "Indie music", "Trekking", "Foodie", "Cricket",
   "Pride events", "Bookworm", "Gym", "Travel", "Art", "Gaming",
   "Cooking", "Standup comedy", "Yoga", "Astrology", "Cafe hopping", "Theatre",
 ];
-const STEPS = ["orientation", "lookingFor", "name", "gender", "interestedIn", "birthday", "interests", "photos"] as const;
+const STEPS = ["interestedIn", "interests", "photos"] as const;
 const MAX_PHOTOS = 6;
-const MAX_ORIENTATIONS = 3;
 const MAX_INTERESTS = 5;
 
 interface OnbState {
-  orientation: string[];
-  lookingFor: string | null;
-  name: string;
-  gender: string | null;
   interestedIn: string | null;
-  dob: { day: string; month: string; year: string };
   interests: string[];
   photos: string[];
 }
@@ -54,19 +38,6 @@ function CheckIcon() {
   );
 }
 
-function computeAge(dob: { day: string; month: string; year: string }): number | null {
-  const d = parseInt(dob.day, 10);
-  const m = parseInt(dob.month, 10);
-  const y = parseInt(dob.year, 10);
-  if (!d || !m || !y || String(y).length < 4) return null;
-  const birth = new Date(y, m - 1, d);
-  const today = new Date();
-  let age = today.getFullYear() - birth.getFullYear();
-  const monthDiff = today.getMonth() - birth.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) age--;
-  return age;
-}
-
 export default function Onboarding() {
   const navigate = useNavigate();
   const [stepIndex, setStepIndex] = useState(0);
@@ -75,32 +46,29 @@ export default function Onboarding() {
   const [saveError, setSaveError] = useState("");
   const [photoError, setPhotoError] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [displayName, setDisplayName] = useState("friend");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const [state, setState] = useState<OnbState>({
-    orientation: [],
-    lookingFor: null,
-    name: "",
-    gender: null,
     interestedIn: null,
-    dob: { day: "", month: "", year: "" },
     interests: [],
     photos: [],
   });
 
+  useEffect(() => {
+    api
+      .get("/profiles/me")
+      .then((res) => {
+        if (res.data?.displayName) setDisplayName(res.data.displayName);
+      })
+      .catch((err) => console.error("Could not load profile name", err));
+  }, []);
+
   const step = STEPS[stepIndex];
 
   function stepIsValid(): boolean {
-    if (step === "orientation") return state.orientation.length > 0;
-    if (step === "lookingFor") return !!state.lookingFor;
-    if (step === "name") return state.name.trim().length >= 2;
-    if (step === "gender") return !!state.gender;
     if (step === "interestedIn") return !!state.interestedIn;
-    if (step === "birthday") {
-      const age = computeAge(state.dob);
-      return age !== null && age >= 18;
-    }
     if (step === "interests") return true;
     if (step === "photos") return state.photos.length >= 2;
     return true;
@@ -127,15 +95,9 @@ export default function Onboarding() {
     setSaving(true);
     setSaveError("");
     try {
-      const age = computeAge(state.dob);
       await api.patch("/profiles/me", {
-        displayName: state.name,
-        orientation: state.orientation.join(", "),
-        genderIdentity: state.gender || undefined,
         interestedIn: state.interestedIn ? [state.interestedIn] : [],
-        datingIntentions: state.lookingFor || undefined,
         interests: state.interests,
-        age: age || undefined,
       });
       setFinished(true);
     } catch (err) {
@@ -242,7 +204,7 @@ export default function Onboarding() {
     return () => cancelAnimationFrame(raf);
   }, [finished]);
 
-  const showSkip = step === "orientation" || step === "interests";
+  const showSkip = step === "interests";
   const ctaLabel =
     step === "interests" && state.interests.length > 0
       ? "Next (" + state.interests.length + "/" + MAX_INTERESTS + ")"
@@ -297,93 +259,12 @@ export default function Onboarding() {
               <h1 className="onb-h1">
                 Welcome to Jobber Match,
                 <br />
-                <em>{state.name || "friend"}.</em>
+                <em>{displayName}.</em>
               </h1>
               <p className="onb-subtext">Your profile is ready. Time to start exploring.</p>
             </div>
           ) : (
             <>
-              {step === "orientation" && (
-                <>
-                  <p className="onb-eyebrow">step {stepIndex + 1} of {STEPS.length}</p>
-                  <h1 className="onb-h1">Your sexual <em>orientation?</em></h1>
-                  <p className="onb-subtext">Select up to {MAX_ORIENTATIONS}. This helps us tune who shows up in your feed.</p>
-                  <div className="onb-option-list">
-                    {ORIENTATIONS.map((o) => (
-                      <div
-                        key={o}
-                        className={"onb-option-row" + (state.orientation.includes(o) ? " selected" : "")}
-                        onClick={() => {
-                          buzz();
-                          setState((s) => ({ ...s, orientation: toggleValue(s.orientation, o, MAX_ORIENTATIONS) }));
-                        }}
-                      >
-                        <span className="onb-label">{o}</span>
-                        <span className="onb-check"><CheckIcon /></span>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {step === "lookingFor" && (
-                <>
-                  <p className="onb-eyebrow">step {stepIndex + 1} of {STEPS.length}</p>
-                  <h1 className="onb-h1">What are you <em>looking for?</em></h1>
-                  <p className="onb-subtext">All good if it changes. There's something for everyone.</p>
-                  <div className="onb-card-grid">
-                    {LOOKING_FOR.map((o) => (
-                      <div
-                        key={o.key}
-                        className={"onb-grid-card" + (state.lookingFor === o.key ? " selected" : "")}
-                        onClick={() => {
-                          buzz();
-                          setState((s) => ({ ...s, lookingFor: o.key }));
-                        }}
-                      >
-                        <span className="onb-emoji">{o.emoji}</span>
-                        <span>{o.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {step === "name" && (
-                <>
-                  <p className="onb-eyebrow">step {stepIndex + 1} of {STEPS.length}</p>
-                  <h1 className="onb-h1">What's your <em>first name?</em></h1>
-                  <input
-                    type="text"
-                    value={state.name}
-                    placeholder="e.g. Amit"
-                    onChange={(e) => setState((s) => ({ ...s, name: e.target.value }))}
-                  />
-                  <p className="onb-helper">This is how it'll appear on your profile.</p>
-                </>
-              )}
-
-              {step === "gender" && (
-                <>
-                  <p className="onb-eyebrow">step {stepIndex + 1} of {STEPS.length}</p>
-                  <h1 className="onb-h1">What's your <em>gender?</em></h1>
-                  <div className="onb-pill-list">
-                    {GENDERS.map((g) => (
-                      <div
-                        key={g}
-                        className={"onb-pill" + (state.gender === g ? " selected" : "")}
-                        onClick={() => {
-                          buzz();
-                          setState((s) => ({ ...s, gender: g }));
-                        }}
-                      >
-                        {g}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-
               {step === "interestedIn" && (
                 <>
                   <p className="onb-eyebrow">step {stepIndex + 1} of {STEPS.length}</p>
@@ -402,49 +283,6 @@ export default function Onboarding() {
                       </div>
                     ))}
                   </div>
-                </>
-              )}
-
-              {step === "birthday" && (
-                <>
-                  <p className="onb-eyebrow">step {stepIndex + 1} of {STEPS.length}</p>
-                  <h1 className="onb-h1">Your <em>b-day?</em></h1>
-                  <div className="onb-dob-row">
-                    <div className="onb-dob-field">
-                      <label>Day</label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={31}
-                        placeholder="DD"
-                        value={state.dob.day}
-                        onChange={(e) => setState((s) => ({ ...s, dob: { ...s.dob, day: e.target.value } }))}
-                      />
-                    </div>
-                    <div className="onb-dob-field">
-                      <label>Month</label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={12}
-                        placeholder="MM"
-                        value={state.dob.month}
-                        onChange={(e) => setState((s) => ({ ...s, dob: { ...s.dob, month: e.target.value } }))}
-                      />
-                    </div>
-                    <div className="onb-dob-field">
-                      <label>Year</label>
-                      <input
-                        type="number"
-                        min={1940}
-                        max={2010}
-                        placeholder="YYYY"
-                        value={state.dob.year}
-                        onChange={(e) => setState((s) => ({ ...s, dob: { ...s.dob, year: e.target.value } }))}
-                      />
-                    </div>
-                  </div>
-                  <p className="onb-helper">Your profile shows your age, not your date of birth. You must be 18+ to use Jobber Match.</p>
                 </>
               )}
 
