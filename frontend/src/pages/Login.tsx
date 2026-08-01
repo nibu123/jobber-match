@@ -31,7 +31,7 @@ export default function Login() {
   return (
     <div className="container">
       <div style={{ textAlign: "center", margin: "32px 0" }}>
-        <div className="brand">Jobber Match</div>
+        <div className="brand">Buddies Pride</div>
         <p style={{ color: "var(--text-muted)", fontSize: 14 }}>Welcome back</p>
       </div>
 

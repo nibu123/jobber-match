@@ -76,7 +76,7 @@ export default function Signup() {
   return (
     <div className="container">
       <div style={{ textAlign: "center", margin: "32px 0" }}>
-        <div className="brand">Jobber Match</div>
+        <div className="brand">Buddies Pride</div>
         <p className="tagline">Find your people</p>
       </div>
 

@@ -258,7 +258,7 @@ export default function Onboarding() {
               </div>
               <p className="onb-eyebrow">all set</p>
               <h1 className="onb-h1">
-                Welcome to Jobber Match,
+                Welcome to Buddies Pride,
                 <br />
                 <em>{displayName}.</em>
               </h1>
