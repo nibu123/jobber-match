@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import PumpingHeart from "../components/PumpingHeart";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -31,7 +32,8 @@ export default function Login() {
   return (
     <div className="container">
       <div style={{ textAlign: "center", margin: "32px 0" }}>
-        <div className="brand">Buddies Pride</div>
+        <PumpingHeart />
+            <div className="brand">Buddies Pride</div>
         <p style={{ color: "var(--text-muted)", fontSize: 14 }}>Welcome back</p>
       </div>
 
@@ -59,4 +61,6 @@ export default function Login() {
     </div>
   );
 }
+
+
 
