@@ -65,7 +65,7 @@ export default function Signup() {
         datingIntentions: datingIntentions || undefined,
       });
       login(res.data.token, res.data.userId);
-      navigate("/browse");
+      navigate("/onboarding");
     } catch (err: any) {
       setError(err.response?.data?.error?.formErrors?.[0] || err.response?.data?.error || "Signup failed");
     } finally {
@@ -183,3 +183,4 @@ export default function Signup() {
     </div>
   );
 }
+

@@ -5,6 +5,7 @@ import Signup from "./pages/Signup";
 import Browse from "./pages/Browse";
 import Matches from "./pages/Matches";
 import Profile from "./pages/Profile";
+import Onboarding from "./pages/Onboarding";
 import "./App.css";
 import PrideFlag from "./components/PrideFlag";
 
@@ -47,10 +48,19 @@ export default function App() {
           </RequireAuth>
         }
       />
+      <Route
+        path="/onboarding"
+        element={
+          <RequireAuth>
+            <Onboarding />
+          </RequireAuth>
+        }
+      />
       <Route path="*" element={<Navigate to="/browse" replace />} />
       </Routes>
     </>
   );
 }
+
 
 
