@@ -188,7 +188,12 @@ export default function Browse() {
         >
           <div className="swipe-photo-wrap" onClick={handlePhotoTap}>
             {current.photos && current.photos.length > 0 ? (
-              <img src={current.photos[Math.min(photoIndex, current.photos.length - 1)]} alt={current.display_name} draggable={false} />
+              <img
+                src={current.photos[Math.min(photoIndex, current.photos.length - 1)]}
+                alt={current.display_name}
+                draggable={false}
+                style={{ filter: "blur(22px)", transform: "scale(1.08)" }}
+              />
             ) : (
               <div
                 style={{
@@ -427,6 +432,7 @@ export default function Browse() {
     </div>
   );
 }
+
 
 
 
