@@ -3,17 +3,26 @@ import { useNavigate } from "react-router-dom";
 import api from "../api/client";
 import "./Onboarding.css";
 
+const LOOKING_FOR = [
+  { key: "long_partner", emoji: "\u{1F498}", label: "Long-term partner" },
+  { key: "long_short_ok", emoji: "\u{1F60D}", label: "Long-term, but short-term OK" },
+  { key: "short_long_ok", emoji: "\u{1F942}", label: "Short-term, but long-term OK" },
+  { key: "short_fun", emoji: "\u{1F389}", label: "Short-term fun" },
+  { key: "friends", emoji: "\u{1F44B}", label: "New friends" },
+  { key: "figuring_out", emoji: "\u{1F914}", label: "Still figuring it out" },
+];
 const INTERESTED_IN = ["Men", "Women", "Everyone"];
 const INTERESTS = [
   "Chai addict", "Bollywood", "Indie music", "Trekking", "Foodie", "Cricket",
   "Pride events", "Bookworm", "Gym", "Travel", "Art", "Gaming",
   "Cooking", "Standup comedy", "Yoga", "Astrology", "Cafe hopping", "Theatre",
 ];
-const STEPS = ["interestedIn", "interests", "photos"] as const;
+const STEPS = ["lookingFor", "interestedIn", "interests", "photos"] as const;
 const MAX_PHOTOS = 6;
 const MAX_INTERESTS = 5;
 
 interface OnbState {
+  lookingFor: string | null;
   interestedIn: string | null;
   interests: string[];
   photos: string[];
@@ -51,6 +60,7 @@ export default function Onboarding() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const [state, setState] = useState<OnbState>({
+    lookingFor: null,
     interestedIn: null,
     interests: [],
     photos: [],
@@ -68,6 +78,7 @@ export default function Onboarding() {
   const step = STEPS[stepIndex];
 
   function stepIsValid(): boolean {
+    if (step === "lookingFor") return !!state.lookingFor;
     if (step === "interestedIn") return !!state.interestedIn;
     if (step === "interests") return true;
     if (step === "photos") return state.photos.length >= 2;
@@ -96,6 +107,7 @@ export default function Onboarding() {
     setSaveError("");
     try {
       await api.patch("/profiles/me", {
+        relationshipStructure: state.lookingFor,
         interestedIn: state.interestedIn ? [state.interestedIn] : [],
         interests: state.interests,
       });
@@ -266,6 +278,29 @@ export default function Onboarding() {
             </div>
           ) : (
             <>
+              {step === "lookingFor" && (
+                <>
+                  <p className="onb-eyebrow">step {stepIndex + 1} of {STEPS.length}</p>
+                  <h1 className="onb-h1">What are you <em>looking for?</em></h1>
+                  <p className="onb-subtext">All good if it changes. There's something for everyone.</p>
+                  <div className="onb-card-grid">
+                    {LOOKING_FOR.map((o) => (
+                      <div
+                        key={o.key}
+                        className={"onb-grid-card" + (state.lookingFor === o.key ? " selected" : "")}
+                        onClick={() => {
+                          buzz();
+                          setState((s) => ({ ...s, lookingFor: o.key }));
+                        }}
+                      >
+                        <span className="onb-emoji">{o.emoji}</span>
+                        <span>{o.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
               {step === "interestedIn" && (
                 <>
                   <p className="onb-eyebrow">step {stepIndex + 1} of {STEPS.length}</p>
@@ -377,4 +412,3 @@ export default function Onboarding() {
     </div>
   );
 }
-
