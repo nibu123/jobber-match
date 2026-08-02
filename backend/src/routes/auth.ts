@@ -3,11 +3,107 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { pool } from "../db/pool";
+import { sendOtpEmail } from "../utils/email";
 
 const router = Router();
 
+function generateOtpCode() {
+  return String(Math.floor(100000 + Math.random() * 900000)); // 6 digits
+}
+
+const sendOtpSchema = z.object({
+  email: z.string().email(),
+});
+
+router.post("/send-otp", async (req, res) => {
+  const parsed = sendOtpSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Enter a valid email address" });
+  }
+  const { email } = parsed.data;
+
+  try {
+    const existingUser = await pool.query("SELECT id FROM users WHERE email = $1", [email]);
+    if (existingUser.rows.length > 0) {
+      return res.status(409).json({ error: "Email already registered" });
+    }
+
+    const code = generateOtpCode();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    await pool.query("UPDATE otp_codes SET consumed = TRUE WHERE email = $1 AND consumed = FALSE", [email]);
+
+    await pool.query(
+      "INSERT INTO otp_codes (email, code, expires_at) VALUES ($1, $2, $3)",
+      [email, code, expiresAt]
+    );
+
+    await sendOtpEmail(email, code);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Send OTP error:", err);
+    res.status(500).json({ error: "Could not send code. Please try again." });
+  }
+});
+
+const verifyOtpSchema = z.object({
+  email: z.string().email(),
+  code: z.string().length(6),
+});
+
+router.post("/verify-otp", async (req, res) => {
+  const parsed = verifyOtpSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Enter the 6-digit code" });
+  }
+  const { email, code } = parsed.data;
+
+  try {
+    const result = await pool.query(
+      `SELECT id, code, expires_at, attempts FROM otp_codes
+       WHERE email = $1 AND consumed = FALSE
+       ORDER BY created_at DESC LIMIT 1`,
+      [email]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(400).json({ error: "No code found. Please request a new one." });
+    }
+
+    const otp = result.rows[0];
+
+    if (new Date(otp.expires_at) < new Date()) {
+      return res.status(400).json({ error: "Code expired. Please request a new one." });
+    }
+
+    if (otp.attempts >= 5) {
+      return res.status(429).json({ error: "Too many attempts. Please request a new code." });
+    }
+
+    if (otp.code !== code) {
+      await pool.query("UPDATE otp_codes SET attempts = attempts + 1 WHERE id = $1", [otp.id]);
+      return res.status(400).json({ error: "Incorrect code" });
+    }
+
+    await pool.query("UPDATE otp_codes SET consumed = TRUE WHERE id = $1", [otp.id]);
+
+    const emailVerifyToken = jwt.sign(
+      { email, purpose: "email_verify" },
+      process.env.JWT_SECRET as string,
+      { expiresIn: "15m" }
+    );
+
+    res.json({ emailVerifyToken });
+  } catch (err) {
+    console.error("Verify OTP error:", err);
+    res.status(500).json({ error: "Verification failed" });
+  }
+});
+
 const signupSchema = z.object({
   email: z.string().email(),
+  emailVerifyToken: z.string(),
   password: z.string().min(8),
   displayName: z.string().min(1).max(50),
   orientation: z.string().min(1),
@@ -23,10 +119,24 @@ router.post("/signup", async (req, res) => {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
 
-  const { email, password, displayName, orientation, genderIdentity, pronouns, age, datingIntentions } =
+  const { email, emailVerifyToken, password, displayName, orientation, genderIdentity, pronouns, age, datingIntentions } =
     parsed.data;
 
   try {
+    let verifiedPayload: { email: string; purpose: string };
+    try {
+      verifiedPayload = jwt.verify(emailVerifyToken, process.env.JWT_SECRET as string) as {
+        email: string;
+        purpose: string;
+      };
+    } catch {
+      return res.status(400).json({ error: "Email verification expired. Please verify your email again." });
+    }
+
+    if (verifiedPayload.purpose !== "email_verify" || verifiedPayload.email !== email) {
+      return res.status(400).json({ error: "Please verify your email first" });
+    }
+
     const existing = await pool.query("SELECT id FROM users WHERE email = $1", [email]);
     if (existing.rows.length > 0) {
       return res.status(409).json({ error: "Email already registered" });
@@ -35,7 +145,7 @@ router.post("/signup", async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 10);
 
     const userResult = await pool.query(
-      "INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id",
+      "INSERT INTO users (email, password_hash, is_verified) VALUES ($1, $2, TRUE) RETURNING id",
       [email, passwordHash]
     );
     const userId = userResult.rows[0].id;
