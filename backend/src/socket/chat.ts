@@ -12,7 +12,6 @@ interface AuthedSocket extends Socket {
 const CHAT_CHANNEL_PREFIX = "jobber-match:chat:";
 
 export function initChatSocket(io: Server) {
-  // Middleware: verify JWT on socket connection
   io.use((socket: AuthedSocket, next) => {
     const token = socket.handshake.auth?.token;
     if (!token) return next(new Error("No token provided"));
@@ -29,17 +28,12 @@ export function initChatSocket(io: Server) {
   io.on("connection", (socket: AuthedSocket) => {
     console.log(`🔌 User connected: ${socket.userId}`);
 
-    // Personal room — lets us target this exact user for call signaling
-    // (incoming call, decline, hangup) without them needing to have opened
-    // a specific match's chat room first.
     socket.join(`user:${socket.userId}`);
 
-    // Join a chat room for a specific match
     socket.on("join_match", (matchId: string) => {
       socket.join(matchId);
     });
 
-    // Send a message
     socket.on("send_message", async (data: { matchId: string; content: string }) => {
       const { matchId, content } = data;
       if (!content || content.trim().length === 0) return;
@@ -51,15 +45,11 @@ export function initChatSocket(io: Server) {
         );
         const message = result.rows[0];
 
-        // Publish via Redis so this works across multiple server instances
         await redisPublisher.publish(
           `${CHAT_CHANNEL_PREFIX}${matchId}`,
           JSON.stringify(message)
         );
 
-        // Push-notify the other person if they're not actively in this
-        // room on THIS server instance (best-effort; fine to occasionally
-        // skip/duplicate across instances for an MVP).
         try {
           const matchRow = await pool.query(
             `SELECT user_a, user_b FROM matches WHERE id = $1`,
@@ -89,8 +79,6 @@ export function initChatSocket(io: Server) {
       }
     });
 
-    // --- Video call signaling (actual media goes over LiveKit, not this socket) ---
-
     async function loadMatchAndOtherUser(matchId: string): Promise<string | null> {
       const result = await pool.query(`SELECT user_a, user_b FROM matches WHERE id = $1 AND status = 'accepted'`, [matchId]);
       if (result.rows.length === 0) return null;
@@ -116,7 +104,6 @@ export function initChatSocket(io: Server) {
 
         io.to(`user:${otherUserId}`).emit("incoming_call", { matchId, callerId: socket.userId, callerName });
 
-        // If the callee has no active socket at all, ring via push instead.
         const calleeSockets = await io.in(`user:${otherUserId}`).fetchSockets();
         if (calleeSockets.length === 0) {
           notifyUser(otherUserId, {
@@ -176,7 +163,6 @@ export function initChatSocket(io: Server) {
     });
   });
 
-  // Subscribe to Redis pattern for all chat channels, relay to correct Socket.io room
   redisSubscriber.psubscribe(`${CHAT_CHANNEL_PREFIX}*`);
   redisSubscriber.on("pmessage", (_pattern, channel, message) => {
     const matchId = channel.replace(CHAT_CHANNEL_PREFIX, "");
