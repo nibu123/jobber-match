@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import type { FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../api/client";
-import { connectSocket, getSocket, disconnectSocket } from "../api/socket";
+import { getSocket } from "../api/socket";
 import TabBar from "../components/TabBar";
 import { useAuth } from "../context/AuthContext";
 
@@ -26,6 +27,7 @@ interface Message {
 
 export default function Matches() {
   const { userId } = useAuth();
+  const navigate = useNavigate();
   const [matches, setMatches] = useState<MatchSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeMatch, setActiveMatch] = useState<MatchSummary | null>(null);
@@ -39,9 +41,6 @@ export default function Matches() {
       .then((res) => setMatches(res.data))
       .catch((err) => console.error("Failed to load matches", err))
       .finally(() => setLoading(false));
-
-    connectSocket();
-    return () => disconnectSocket();
   }, []);
 
   useEffect(() => {
@@ -85,6 +84,16 @@ export default function Matches() {
     }
   }
 
+  function startVideoCall() {
+    if (!activeMatch) return;
+    getSocket()?.emit("call_invite", { matchId: activeMatch.id });
+    navigate(
+      `/call/${activeMatch.id}?peerId=${activeMatch.other_user_id}&peerName=${encodeURIComponent(
+        activeMatch.display_name
+      )}&role=caller`
+    );
+  }
+
   function sendMessage(e: FormEvent) {
     e.preventDefault();
     if (!draft.trim() || !activeMatch) return;
@@ -114,6 +123,21 @@ export default function Matches() {
             )}
           </div>
           <div className="chat-name">{activeMatch.display_name}</div>
+          <button
+            type="button"
+            onClick={startVideoCall}
+            aria-label={`Video call ${activeMatch.display_name}`}
+            title="Video call"
+            style={{
+              marginLeft: "auto",
+              background: "none",
+              border: "none",
+              fontSize: 20,
+              cursor: "pointer",
+            }}
+          >
+            📹
+          </button>
         </div>
 
         {!activeMatch.my_photo_revealed && (
@@ -207,6 +231,3 @@ export default function Matches() {
     </div>
   );
 }
-
-
-
