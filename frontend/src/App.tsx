@@ -6,8 +6,12 @@ import Browse from "./pages/Browse";
 import Matches from "./pages/Matches";
 import Profile from "./pages/Profile";
 import Onboarding from "./pages/Onboarding";
+import Safety from "./pages/Safety";
+import Communities from "./pages/Communities";
+import VideoCall from "./pages/VideoCall";
 import "./App.css";
 import PrideFlag from "./components/PrideFlag";
+import CallManager from "./components/CallManager";
 
 function RequireAuth({ children }: { children: React.JSX.Element }) {
   const { token } = useAuth();
@@ -16,11 +20,13 @@ function RequireAuth({ children }: { children: React.JSX.Element }) {
 }
 
 export default function App() {
+  const { token } = useAuth();
   return (
     <>
       <div className="pride-flag-bg">
         <PrideFlag />
       </div>
+      {token && <CallManager />}
       <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
@@ -56,11 +62,32 @@ export default function App() {
           </RequireAuth>
         }
       />
+      <Route
+        path="/safety"
+        element={
+          <RequireAuth>
+            <Safety />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/communities"
+        element={
+          <RequireAuth>
+            <Communities />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/call/:matchId"
+        element={
+          <RequireAuth>
+            <VideoCall />
+          </RequireAuth>
+        }
+      />
       <Route path="*" element={<Navigate to="/browse" replace />} />
       </Routes>
     </>
   );
 }
-
-
-
