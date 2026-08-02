@@ -42,9 +42,72 @@ export default function Signup() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ---- Email verification (OTP) state ----
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [emailVerifyToken, setEmailVerifyToken] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  function startResendCooldown() {
+    setResendCooldown(30);
+    const timer = setInterval(() => {
+      setResendCooldown((s) => {
+        if (s <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+  }
+
+  async function handleSendOtp() {
+    setOtpError("");
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setOtpError("Enter a valid email address");
+      return;
+    }
+    setOtpLoading(true);
+    try {
+      await api.post("/auth/send-otp", { email });
+      setOtpSent(true);
+      startResendCooldown();
+    } catch (err: any) {
+      setOtpError(err.response?.data?.error || "Could not send code. Please try again.");
+    } finally {
+      setOtpLoading(false);
+    }
+  }
+
+  async function handleVerifyOtp() {
+    setOtpError("");
+    if (otpCode.length !== 6) {
+      setOtpError("Enter the 6-digit code");
+      return;
+    }
+    setOtpLoading(true);
+    try {
+      const res = await api.post("/auth/verify-otp", { email, code: otpCode });
+      setEmailVerifyToken(res.data.emailVerifyToken);
+      setEmailVerified(true);
+    } catch (err: any) {
+      setOtpError(err.response?.data?.error || "Verification failed");
+    } finally {
+      setOtpLoading(false);
+    }
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
+
+    if (!emailVerified) {
+      setError("Please verify your email first");
+      return;
+    }
 
     const ageNum = Number(age);
     if (!age || isNaN(ageNum) || ageNum < 18) {
@@ -56,6 +119,7 @@ export default function Signup() {
     try {
       const res = await api.post("/auth/signup", {
         email,
+        emailVerifyToken,
         password,
         displayName,
         age: ageNum,
@@ -80,6 +144,70 @@ export default function Signup() {
         <p className="tagline">Find your people</p>
       </div>
 
+      <div className="card" style={{ marginBottom: emailVerified ? 16 : 0 }}>
+        <div className="field">
+          <label>Email</label>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={emailVerified}
+              required
+              style={{ flex: 1 }}
+            />
+            {!emailVerified && (
+              <button
+                type="button"
+                className="btn"
+                onClick={handleSendOtp}
+                disabled={otpLoading || resendCooldown > 0}
+              >
+                {otpSent
+                  ? resendCooldown > 0
+                    ? `Resend (${resendCooldown}s)`
+                    : "Resend code"
+                  : otpLoading
+                  ? "Sending..."
+                  : "Send code"}
+              </button>
+            )}
+            {emailVerified && <span style={{ color: "var(--gold, #eab564)", alignSelf: "center" }}>✓ Verified</span>}
+          </div>
+        </div>
+
+        {otpSent && !emailVerified && (
+          <div className="field">
+            <label>Enter 6-digit code</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+                placeholder="000000"
+                style={{ flex: 1, letterSpacing: "4px" }}
+              />
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleVerifyOtp}
+                disabled={otpLoading || otpCode.length !== 6}
+              >
+                {otpLoading ? "Verifying..." : "Verify"}
+              </button>
+            </div>
+            <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 6 }}>
+              Sent to {email}. Code expires in 10 minutes.
+            </p>
+          </div>
+        )}
+
+        {otpError && <p className="error-text">{otpError}</p>}
+      </div>
+
+      {emailVerified && (
       <form onSubmit={handleSubmit} className="card">
         <div className="field">
           <label>Display name</label>
@@ -96,11 +224,6 @@ export default function Signup() {
             placeholder="Must be 18 or older"
             required
           />
-        </div>
-
-        <div className="field">
-          <label>Email</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         </div>
 
         <div className="field">
@@ -176,6 +299,7 @@ export default function Signup() {
           {loading ? "Creating account..." : "Sign up"}
         </button>
       </form>
+      )}
 
       <p style={{ textAlign: "center", marginTop: 16, color: "var(--text-muted)", fontSize: 14 }}>
         Already have an account? <Link to="/login" style={{ color: "var(--gold)" }}>Log in</Link>
@@ -183,4 +307,3 @@ export default function Signup() {
     </div>
   );
 }
-

@@ -20,7 +20,7 @@
 }
 
 .disp {
-  font-family: "Fredoka", sans-serif;
+  font-family: "Great Vibes", cursive;
 }
 
 .serif-i {
@@ -55,10 +55,9 @@ a {
 }
 
 .brand {
-  font-family: "Fredoka", sans-serif;
-  font-size: 30px;
-  font-weight: 800;
-  letter-spacing: -0.01em;
+  font-family: "Great Vibes", cursive;
+  font-size: 52px;
+  letter-spacing: 0.01em;
   background: linear-gradient(90deg, #FF69B4, #E40303, #FF8C00, #FFED00, #008026, #24408E, #732982);
   background-size: 200% auto;
   -webkit-background-clip: text;
@@ -134,7 +133,7 @@ a {
   padding: 13px 20px;
   font-size: 15px;
   font-weight: 700;
-  font-family: "Fredoka", sans-serif;
+  font-family: "Great Vibes", cursive;
   cursor: pointer;
   width: 100%;
 }
@@ -187,8 +186,7 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: "Fredoka", sans-serif;
-  font-weight: 800;
+  font-family: "Great Vibes", cursive;
   font-size: 20px;
   color: var(--bg-deep);
   flex-shrink: 0;
@@ -226,7 +224,7 @@ nav.tabbar a {
   font-size: 13px;
   font-weight: 600;
   text-align: center;
-  font-family: "Fredoka", sans-serif;
+  font-family: "Great Vibes", cursive;
 }
 
 nav.tabbar a.active {
@@ -384,7 +382,7 @@ input, select, textarea {
 }
 
 .swipe-name {
-  font-family: "Fredoka", sans-serif;
+  font-family: "Great Vibes", cursive;
   font-weight: 700;
   font-size: 24px;
 }
@@ -770,9 +768,8 @@ input, select, textarea {
 .swipe-stamp {
   position: absolute;
   top: 28px;
-  font-family: "Fredoka", sans-serif;
-  font-weight: 800;
-  font-size: 30px;
+  font-family: "Great Vibes", cursive;
+  font-size: 52px;
   letter-spacing: 2px;
   padding: 6px 14px;
   border-radius: 8px;
@@ -855,7 +852,7 @@ input, select, textarea {
 }
 
 .detail-name {
-  font-family: "Fredoka", sans-serif;
+  font-family: "Great Vibes", cursive;
   font-weight: 700;
   font-size: 26px;
 }
