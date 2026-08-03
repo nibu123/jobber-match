@@ -62,7 +62,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT u.id, u.email, u.is_banned, u.ban_reason, u.is_verified, u.created_at, p.*
+`SELECT u.id, u.email, u.is_banned, u.ban_reason, u.banned_at, u.is_verified, u.created_at, p.*
        FROM users u
        LEFT JOIN profiles p ON p.user_id = u.id
        WHERE u.id = $1`,

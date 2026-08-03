@@ -11,12 +11,40 @@ interface UserRow {
   created_at: string;
 }
 
+interface UserDetail extends UserRow {
+  ban_reason: string | null;
+  banned_at: string | null;
+  [key: string]: any; // remaining profile fields (p.*) from backend
+}
+
+const HIDDEN_DETAIL_FIELDS = new Set([
+  'id', 'name', 'email', 'phone', 'is_banned', 'ban_reason',
+  'banned_at', 'is_verified', 'created_at', 'user_id',
+]);
+
+function formatFieldLabel(key: string) {
+  return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function formatValue(value: any) {
+  if (value === null || value === undefined || value === '') return '—';
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+  if (Array.isArray(value)) return value.length ? value.join(', ') : '—';
+  return String(value);
+}
+
 export default function AdminUsers() {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+
+  // detail modal state
+  const [selectedUser, setSelectedUser] = useState<UserDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
 
   function load() {
     adminApi.get('/users', { params: { search, filter, page, limit: 20 } }).then((res) => {
@@ -33,15 +61,48 @@ export default function AdminUsers() {
     load();
   }
 
-  async function toggleBan(u: UserRow) {
+  async function toggleBan(u: UserRow | UserDetail, e?: React.MouseEvent) {
+    e?.stopPropagation();
     const reason = u.is_banned ? undefined : prompt('Ban reason:') || 'Violation of terms';
-    await adminApi.patch(`/users/${u.id}/ban`, { banned: !u.is_banned, reason });
-    load();
+    setActionLoading(true);
+    try {
+      await adminApi.patch(`/users/${u.id}/ban`, { banned: !u.is_banned, reason });
+      load();
+      if (selectedUser && selectedUser.id === u.id) await openDetail(u.id);
+    } finally {
+      setActionLoading(false);
+    }
   }
 
-  async function toggleVerify(u: UserRow) {
-    await adminApi.patch(`/users/${u.id}/verify`, { verified: !u.is_verified });
-    load();
+  async function toggleVerify(u: UserRow | UserDetail, e?: React.MouseEvent) {
+    e?.stopPropagation();
+    setActionLoading(true);
+    try {
+      await adminApi.patch(`/users/${u.id}/verify`, { verified: !u.is_verified });
+      load();
+      if (selectedUser && selectedUser.id === u.id) await openDetail(u.id);
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function openDetail(id: string) {
+    setDetailLoading(true);
+    setDetailError('');
+    setSelectedUser(null);
+    try {
+      const res = await adminApi.get(`/users/${id}`);
+      setSelectedUser(res.data);
+    } catch (err: any) {
+      setDetailError(err?.response?.data?.error || 'Failed to load user detail');
+    } finally {
+      setDetailLoading(false);
+    }
+  }
+
+  function closeModal() {
+    setSelectedUser(null);
+    setDetailError('');
   }
 
   return (
@@ -76,7 +137,11 @@ export default function AdminUsers() {
         </thead>
         <tbody>
           {users.map((u) => (
-            <tr key={u.id} style={{ borderBottom: '1px solid #222' }}>
+            <tr
+              key={u.id}
+              style={{ borderBottom: '1px solid #222', cursor: 'pointer' }}
+              onClick={() => openDetail(u.id)}
+            >
               <td style={{ padding: 8 }}>{u.name}</td>
               <td style={{ padding: 8 }}>{u.email}</td>
               <td style={{ padding: 8 }}>
@@ -85,10 +150,10 @@ export default function AdminUsers() {
               </td>
               <td style={{ padding: 8 }}>{new Date(u.created_at).toLocaleDateString()}</td>
               <td style={{ padding: 8, display: 'flex', gap: 8 }}>
-                <button onClick={() => toggleBan(u)} style={{ padding: '4px 10px', borderRadius: 6, border: 'none', background: u.is_banned ? '#4caf50' : '#e94057', color: '#fff' }}>
+                <button onClick={(e) => toggleBan(u, e)} style={{ padding: '4px 10px', borderRadius: 6, border: 'none', background: u.is_banned ? '#4caf50' : '#e94057', color: '#fff' }}>
                   {u.is_banned ? 'Unban' : 'Ban'}
                 </button>
-                <button onClick={() => toggleVerify(u)} style={{ padding: '4px 10px', borderRadius: 6, border: 'none', background: '#333', color: '#fff' }}>
+                <button onClick={(e) => toggleVerify(u, e)} style={{ padding: '4px 10px', borderRadius: 6, border: 'none', background: '#333', color: '#fff' }}>
                   {u.is_verified ? 'Unverify' : 'Verify'}
                 </button>
               </td>
@@ -102,6 +167,106 @@ export default function AdminUsers() {
         <span>Page {page} / {totalPages}</span>
         <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>Next</button>
       </div>
+
+      {/* Detail Modal */}
+      {(detailLoading || selectedUser || detailError) && (
+        <div
+          onClick={closeModal}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#1a1a22', color: '#fff', borderRadius: 10, padding: 24,
+              width: '90%', maxWidth: 560, maxHeight: '85vh', overflowY: 'auto', position: 'relative',
+              border: '1px solid #333',
+            }}
+          >
+            <button
+              onClick={closeModal}
+              style={{ position: 'absolute', top: 12, right: 12, background: 'none', border: 'none', color: '#aaa', fontSize: 18, cursor: 'pointer' }}
+            >
+              ✕
+            </button>
+
+            {detailLoading && <div style={{ color: '#aaa', textAlign: 'center', padding: 24 }}>Loading profile...</div>}
+            {detailError && <div style={{ color: '#e94057', marginBottom: 12 }}>{detailError}</div>}
+
+            {selectedUser && !detailLoading && (
+              <>
+                <h3 style={{ marginBottom: 4 }}>{selectedUser.name || 'Unnamed User'}</h3>
+                <p style={{ color: '#aaa', marginBottom: 4 }}>{selectedUser.email}</p>
+                {selectedUser.phone && <p style={{ color: '#aaa', marginBottom: 12 }}>{selectedUser.phone}</p>}
+
+                <div style={{ marginBottom: 16 }}>
+                  {selectedUser.is_banned && <span style={{ color: '#e94057', marginRight: 8 }}>Banned</span>}
+                  {selectedUser.is_verified && <span style={{ color: '#4caf50' }}>Verified</span>}
+                </div>
+
+                <h4 style={{ fontSize: 13, color: '#888', textTransform: 'uppercase', marginBottom: 8, borderBottom: '1px solid #333', paddingBottom: 4 }}>
+                  Account Info
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
+                  <div>
+                    <div style={{ fontSize: 11, color: '#888' }}>Joined</div>
+                    <div>{new Date(selectedUser.created_at).toLocaleString()}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: '#888' }}>User ID</div>
+                    <div style={{ fontSize: 12, wordBreak: 'break-all' }}>{selectedUser.id}</div>
+                  </div>
+                  {selectedUser.is_banned && (
+                    <>
+                      <div>
+                        <div style={{ fontSize: 11, color: '#888' }}>Ban Reason</div>
+                        <div>{formatValue(selectedUser.ban_reason)}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: '#888' }}>Banned At</div>
+                        <div>{selectedUser.banned_at ? new Date(selectedUser.banned_at).toLocaleString() : '—'}</div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <h4 style={{ fontSize: 13, color: '#888', textTransform: 'uppercase', marginBottom: 8, borderBottom: '1px solid #333', paddingBottom: 4 }}>
+                  Profile Details
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
+                  {Object.entries(selectedUser)
+                    .filter(([key]) => !HIDDEN_DETAIL_FIELDS.has(key))
+                    .map(([key, value]) => (
+                      <div key={key}>
+                        <div style={{ fontSize: 11, color: '#888' }}>{formatFieldLabel(key)}</div>
+                        <div>{formatValue(value)}</div>
+                      </div>
+                    ))}
+                </div>
+
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    disabled={actionLoading}
+                    onClick={(e) => toggleBan(selectedUser, e)}
+                    style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: selectedUser.is_banned ? '#4caf50' : '#e94057', color: '#fff' }}
+                  >
+                    {selectedUser.is_banned ? 'Unban User' : 'Ban User'}
+                  </button>
+                  <button
+                    disabled={actionLoading}
+                    onClick={(e) => toggleVerify(selectedUser, e)}
+                    style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: '#333', color: '#fff' }}
+                  >
+                    {selectedUser.is_verified ? 'Unverify User' : 'Verify User'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
