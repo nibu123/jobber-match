@@ -1,1 +1,5 @@
 test-image.jpg
+.vercel
+.env*
+backend/.env
+backend/set-railway-env.ps1
