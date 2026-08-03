@@ -12,6 +12,12 @@ import VideoCall from "./pages/VideoCall";
 import "./App.css";
 import PrideFlag from "./components/PrideFlag";
 import CallManager from "./components/CallManager";
+import { AdminAuthProvider } from "./context/AdminAuthContext";
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminLayout from "./pages/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminReports from "./pages/admin/AdminReports";
 
 function RequireAuth({ children }: { children: React.JSX.Element }) {
   const { token } = useAuth();
@@ -27,6 +33,7 @@ export default function App() {
         <PrideFlag />
       </div>
       {token && <CallManager />}
+      <AdminAuthProvider>
       <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
@@ -86,8 +93,16 @@ export default function App() {
           </RequireAuth>
         }
       />
+      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="users" element={<AdminUsers />} />
+        <Route path="reports" element={<AdminReports />} />
+      </Route>
       <Route path="*" element={<Navigate to="/browse" replace />} />
       </Routes>
+      </AdminAuthProvider>
     </>
   );
 }
+
