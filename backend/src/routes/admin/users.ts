@@ -77,6 +77,24 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// GET /api/admin/users/:id/login-history
+router.get('/:id/login-history', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, ip_address, city, region, country, device_type, browser, os, created_at
+       FROM login_history
+       WHERE user_id = $1
+       ORDER BY created_at DESC
+       LIMIT 50`,
+      [req.params.id]
+    );
+    res.json({ history: result.rows });
+  } catch (err) {
+    console.error('Login history fetch error:', err);
+    res.status(500).json({ error: 'Failed to fetch login history' });
+  }
+});
+
 // PATCH /api/admin/users/:id/ban  { banned: true, reason: "..." }
 router.patch('/:id/ban', async (req: AdminRequest, res) => {
   const { banned, reason } = req.body;

@@ -2,6 +2,7 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
+import { UAParser } from "ua-parser-js";
 import { pool } from "../db/pool";
 import { sendOtpEmail } from "../utils/email";
 
@@ -10,6 +11,82 @@ const router = Router();
 function generateOtpCode() {
   return String(Math.floor(100000 + Math.random() * 900000)); // 6 digits
 }
+
+// ---- Login history helpers ----
+
+function getClientIp(req: any): string {
+  const xff = req.headers["x-forwarded-for"];
+  if (typeof xff === "string" && xff.length > 0) {
+    return xff.split(",")[0].trim();
+  }
+  return req.ip || req.socket?.remoteAddress || "";
+}
+
+function isPrivateIp(ip: string): boolean {
+  if (!ip) return true;
+  return (
+    ip === "::1" ||
+    ip === "127.0.0.1" ||
+    ip.startsWith("10.") ||
+    ip.startsWith("192.168.") ||
+    ip.startsWith("172.16.") ||
+    ip.startsWith("::ffff:127.")
+  );
+}
+
+async function getGeoLocation(ip: string): Promise<{ city: string | null; region: string | null; country: string | null }> {
+  if (isPrivateIp(ip)) {
+    return { city: null, region: null, country: null };
+  }
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2500);
+    const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,city,regionName,country`, {
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    const data = await response.json();
+    if (data.status === "success") {
+      return { city: data.city || null, region: data.regionName || null, country: data.country || null };
+    }
+  } catch (err) {
+    console.error("Geolocation lookup failed:", err);
+  }
+  return { city: null, region: null, country: null };
+}
+
+async function recordLogin(userId: string, req: any) {
+  try {
+    const ip = getClientIp(req);
+    const userAgentString = req.headers["user-agent"] || "";
+    const parser = new UAParser(userAgentString);
+    const device = parser.getDevice();
+    const browser = parser.getBrowser();
+    const os = parser.getOS();
+    const geo = await getGeoLocation(ip);
+
+    await pool.query(
+      `INSERT INTO login_history (user_id, ip_address, city, region, country, device_type, browser, os, user_agent)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [
+        userId,
+        ip || null,
+        geo.city,
+        geo.region,
+        geo.country,
+        device.type || "desktop",
+        browser.name || "Unknown",
+        os.name || "Unknown",
+        userAgentString || null,
+      ]
+    );
+  } catch (err) {
+    // Never let login-tracking break the actual login
+    console.error("Failed to record login history:", err);
+  }
+}
+
+// ---- Existing routes ----
 
 const sendOtpSchema = z.object({
   email: z.string().email(),
@@ -160,6 +237,9 @@ router.post("/signup", async (req, res) => {
       expiresIn: process.env.JWT_EXPIRES_IN || "7d",
     } as jwt.SignOptions);
 
+    // Record this as the first login (fire-and-forget, doesn't block response)
+    recordLogin(userId, req);
+
     res.status(201).json({ token, userId });
   } catch (err) {
     console.error("Signup error:", err);
@@ -204,6 +284,9 @@ router.post("/login", async (req, res) => {
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET as string, {
       expiresIn: process.env.JWT_EXPIRES_IN || "7d",
     } as jwt.SignOptions);
+
+    // Record this login (fire-and-forget, doesn't block response)
+    recordLogin(user.id, req);
 
     res.json({ token, userId: user.id });
   } catch (err) {

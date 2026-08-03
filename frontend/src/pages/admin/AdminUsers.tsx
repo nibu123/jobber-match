@@ -14,7 +14,19 @@ interface UserRow {
 interface UserDetail extends UserRow {
   ban_reason: string | null;
   banned_at: string | null;
-  [key: string]: any; // remaining profile fields (p.*) from backend
+  [key: string]: any;
+}
+
+interface LoginRecord {
+  id: string;
+  ip_address: string | null;
+  city: string | null;
+  region: string | null;
+  country: string | null;
+  device_type: string | null;
+  browser: string | null;
+  os: string | null;
+  created_at: string;
 }
 
 const HIDDEN_DETAIL_FIELDS = new Set([
@@ -33,6 +45,11 @@ function formatValue(value: any) {
   return String(value);
 }
 
+function formatLocation(r: LoginRecord) {
+  const parts = [r.city, r.region, r.country].filter(Boolean);
+  return parts.length ? parts.join(', ') : '—';
+}
+
 export default function AdminUsers() {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [search, setSearch] = useState('');
@@ -40,11 +57,13 @@ export default function AdminUsers() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // detail modal state
   const [selectedUser, setSelectedUser] = useState<UserDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+
+  const [loginHistory, setLoginHistory] = useState<LoginRecord[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   function load() {
     adminApi.get('/users', { params: { search, filter, page, limit: 20 } }).then((res) => {
@@ -90,6 +109,7 @@ export default function AdminUsers() {
     setDetailLoading(true);
     setDetailError('');
     setSelectedUser(null);
+    setLoginHistory([]);
     try {
       const res = await adminApi.get(`/users/${id}`);
       setSelectedUser(res.data);
@@ -98,11 +118,22 @@ export default function AdminUsers() {
     } finally {
       setDetailLoading(false);
     }
+
+    setHistoryLoading(true);
+    try {
+      const histRes = await adminApi.get(`/users/${id}/login-history`);
+      setLoginHistory(histRes.data.history || []);
+    } catch {
+      setLoginHistory([]);
+    } finally {
+      setHistoryLoading(false);
+    }
   }
 
   function closeModal() {
     setSelectedUser(null);
     setDetailError('');
+    setLoginHistory([]);
   }
 
   return (
@@ -168,7 +199,6 @@ export default function AdminUsers() {
         <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>Next</button>
       </div>
 
-      {/* Detail Modal */}
       {(detailLoading || selectedUser || detailError) && (
         <div
           onClick={closeModal}
@@ -181,7 +211,7 @@ export default function AdminUsers() {
             onClick={(e) => e.stopPropagation()}
             style={{
               background: '#1a1a22', color: '#fff', borderRadius: 10, padding: 24,
-              width: '90%', maxWidth: 560, maxHeight: '85vh', overflowY: 'auto', position: 'relative',
+              width: '90%', maxWidth: 640, maxHeight: '85vh', overflowY: 'auto', position: 'relative',
               border: '1px solid #333',
             }}
           >
@@ -229,6 +259,46 @@ export default function AdminUsers() {
                         <div>{selectedUser.banned_at ? new Date(selectedUser.banned_at).toLocaleString() : '—'}</div>
                       </div>
                     </>
+                  )}
+                </div>
+
+                {/* Login History */}
+                <h4 style={{ fontSize: 13, color: '#888', textTransform: 'uppercase', marginBottom: 8, borderBottom: '1px solid #333', paddingBottom: 4 }}>
+                  Login History (IP, Device, Location)
+                </h4>
+                <div style={{ marginBottom: 20 }}>
+                  {historyLoading && <div style={{ color: '#888', fontSize: 13 }}>Loading login history...</div>}
+                  {!historyLoading && loginHistory.length === 0 && (
+                    <div style={{ color: '#888', fontSize: 13 }}>No login records yet.</div>
+                  )}
+                  {!historyLoading && loginHistory.length > 0 && (
+                    <div style={{ maxHeight: 220, overflowY: 'auto', border: '1px solid #2a2a33', borderRadius: 6 }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                        <thead style={{ position: 'sticky', top: 0, background: '#20202b' }}>
+                          <tr style={{ textAlign: 'left' }}>
+                            <th style={{ padding: '6px 8px' }}>When</th>
+                            <th style={{ padding: '6px 8px' }}>IP</th>
+                            <th style={{ padding: '6px 8px' }}>Location</th>
+                            <th style={{ padding: '6px 8px' }}>Device</th>
+                            <th style={{ padding: '6px 8px' }}>Browser / OS</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {loginHistory.map((r, idx) => (
+                            <tr key={r.id} style={{ borderTop: '1px solid #2a2a33', background: idx === 0 ? '#1f2a22' : 'transparent' }}>
+                              <td style={{ padding: '6px 8px', whiteSpace: 'nowrap' }}>
+                                {new Date(r.created_at).toLocaleString()}
+                                {idx === 0 && <span style={{ color: '#4caf50', marginLeft: 6 }}>● latest</span>}
+                              </td>
+                              <td style={{ padding: '6px 8px' }}>{r.ip_address || '—'}</td>
+                              <td style={{ padding: '6px 8px' }}>{formatLocation(r)}</td>
+                              <td style={{ padding: '6px 8px' }}>{r.device_type || '—'}</td>
+                              <td style={{ padding: '6px 8px' }}>{r.browser || '—'} / {r.os || '—'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   )}
                 </div>
 
