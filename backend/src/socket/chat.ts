@@ -60,7 +60,7 @@ export function initChatSocket(io: Server) {
             const recipientId = user_a === socket.userId ? user_b : user_a;
             const room = io.sockets.adapter.rooms.get(matchId);
             const recipientInRoom = room
-              ? [...room].some((sid) => (io.sockets.sockets.get(sid) as AuthedSocket)?.userId === recipientId)
+              ? [...room].some((sid: string) => (io.sockets.sockets.get(sid) as AuthedSocket)?.userId === recipientId)
               : false;
             if (!recipientInRoom) {
               notifyUser(recipientId, {
