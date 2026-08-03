@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import PumpingHeart from "../components/PumpingHeart";
 
 const ORIENTATIONS = [
   "Gay", "Lesbian", "Bisexual", "Pansexual", "Asexual", "Demisexual",
@@ -141,6 +142,7 @@ export default function Signup() {
     <div className="login-page">
       <div style={{ width: "100%", maxWidth: 420, position: "relative", zIndex: 1 }}>
         <div className="login-brand-wrap">
+          <PumpingHeart />
           <div className="brand">Buddies Pride</div>
           <p className="login-tagline">Find your people</p>
         </div>
