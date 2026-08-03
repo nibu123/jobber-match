@@ -52,6 +52,11 @@ export default function Signup() {
   const [otpError, setOtpError] = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
 
+  // ---- Multi-step form state (after email verified) ----
+  // step 1 = basic info, step 2 = preferences
+  const [formStep, setFormStep] = useState(1);
+  const [stepError, setStepError] = useState("");
+
   function startResendCooldown() {
     setResendCooldown(30);
     const timer = setInterval(() => {
@@ -101,6 +106,33 @@ export default function Signup() {
     }
   }
 
+  function handleNextStep() {
+    setStepError("");
+
+    if (!displayName.trim()) {
+      setStepError("Display name is required");
+      return;
+    }
+
+    const ageNum = Number(age);
+    if (!age || isNaN(ageNum) || ageNum < 18) {
+      setStepError("You must be 18 or older to sign up");
+      return;
+    }
+
+    if (!password || password.length < 8) {
+      setStepError("Password must be at least 8 characters");
+      return;
+    }
+
+    setFormStep(2);
+  }
+
+  function handleBackStep() {
+    setStepError("");
+    setFormStep(1);
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
@@ -147,20 +179,19 @@ export default function Signup() {
           <p className="login-tagline">Find your people</p>
         </div>
 
-        <div className="login-glass-card" style={{ marginBottom: emailVerified ? 16 : 0 }}>
-          <div className="login-field">
-            <label>Email</label>
-            <div style={{ display: "flex", gap: 8 }}>
-              <input
-                type="email"
-                className="login-input"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={emailVerified}
-                required
-                style={{ flex: 1 }}
-              />
-              {!emailVerified && (
+        {!emailVerified && (
+          <div className="login-glass-card">
+            <div className="login-field">
+              <label>Email</label>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input
+                  type="email"
+                  className="login-input"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  style={{ flex: 1 }}
+                />
                 <button
                   type="button"
                   className="login-btn"
@@ -176,142 +207,207 @@ export default function Signup() {
                     ? "Sending..."
                     : "Send code"}
                 </button>
-              )}
-              {emailVerified && (
-                <span style={{ color: "#ffd76a", alignSelf: "center", fontSize: 14 }}>✓ Verified</span>
-              )}
-            </div>
-          </div>
-
-          {otpSent && !emailVerified && (
-            <div className="login-field">
-              <label>Enter 6-digit code</label>
-              <div style={{ display: "flex", gap: 8 }}>
-                <input
-                  type="text"
-                  className="login-input"
-                  inputMode="numeric"
-                  maxLength={6}
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
-                  placeholder="000000"
-                  style={{ flex: 1, letterSpacing: "4px" }}
-                />
-                <button
-                  type="button"
-                  className="login-btn"
-                  style={{ width: "auto", padding: "0 16px", whiteSpace: "nowrap" }}
-                  onClick={handleVerifyOtp}
-                  disabled={otpLoading || otpCode.length !== 6}
-                >
-                  {otpLoading ? "Verifying..." : "Verify"}
-                </button>
               </div>
-              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", marginTop: 6 }}>
-                Sent to {email}. Code expires in 10 minutes.
-              </p>
             </div>
-          )}
 
-          {otpError && <p className="login-error-text">{otpError}</p>}
-        </div>
+            {otpSent && (
+              <div className="login-field">
+                <label>Enter 6-digit code</label>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input
+                    type="text"
+                    className="login-input"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+                    placeholder="000000"
+                    style={{ flex: 1, letterSpacing: "4px" }}
+                  />
+                  <button
+                    type="button"
+                    className="login-btn"
+                    style={{ width: "auto", padding: "0 16px", whiteSpace: "nowrap" }}
+                    onClick={handleVerifyOtp}
+                    disabled={otpLoading || otpCode.length !== 6}
+                  >
+                    {otpLoading ? "Verifying..." : "Verify"}
+                  </button>
+                </div>
+                <p style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", marginTop: 6 }}>
+                  Sent to {email}. Code expires in 10 minutes.
+                </p>
+              </div>
+            )}
+
+            {otpError && <p className="login-error-text">{otpError}</p>}
+          </div>
+        )}
 
         {emailVerified && (
-          <form onSubmit={handleSubmit} className="login-glass-card" style={{ marginTop: 16 }}>
-            <div className="login-field">
-              <label>Display name</label>
-              <input className="login-input" value={displayName} onChange={(e) => setDisplayName(e.target.value)} required />
-            </div>
-
-            <div className="login-field">
-              <label>Age</label>
-              <input
-                type="number"
-                className="login-input"
-                min={18}
-                value={age}
-                onChange={(e) => setAge(e.target.value)}
-                placeholder="Must be 18 or older"
-                required
+          <>
+            {/* Step progress indicator */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, margin: "0 0 16px" }}>
+              <div
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: "50%",
+                  background: formStep >= 1 ? "#ffd76a" : "rgba(255,255,255,0.3)",
+                }}
+              />
+              <div style={{ width: 32, height: 2, background: formStep >= 2 ? "#ffd76a" : "rgba(255,255,255,0.3)" }} />
+              <div
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: "50%",
+                  background: formStep >= 2 ? "#ffd76a" : "rgba(255,255,255,0.3)",
+                }}
               />
             </div>
 
-            <div className="login-field">
-              <label>Password (min 8 characters)</label>
-              <input
-                type="password"
-                className="login-input"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                minLength={8}
-                required
-              />
-            </div>
+            {formStep === 1 && (
+              <div className="login-glass-card">
+                <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 13, marginTop: 0, marginBottom: 16, textAlign: "center" }}>
+                  Step 1 of 2 — Basic info
+                </p>
 
-            <div className="login-field">
-              <label>Sexual orientation</label>
-              <select className="login-input" value={orientation} onChange={(e) => setOrientation(e.target.value)}>
-                {ORIENTATIONS.map((o) => (
-                  <option key={o} value={o} style={{ color: "#000" }}>
-                    {o}
-                  </option>
-                ))}
-              </select>
-              {orientation === "Other" && (
-                <input
-                  className="login-input"
-                  value={customOrientation}
-                  onChange={(e) => setCustomOrientation(e.target.value)}
-                  placeholder="Type your orientation"
-                  required
-                  style={{ marginTop: "6px" }}
-                />
-              )}
-            </div>
+                <div className="login-field">
+                  <label>Display name</label>
+                  <input
+                    className="login-input"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    required
+                  />
+                </div>
 
-            <div className="login-field">
-              <label>Gender identity</label>
-              <select className="login-input" value={genderIdentity} onChange={(e) => setGenderIdentity(e.target.value)}>
-                {GENDER_IDENTITIES.map((g) => (
-                  <option key={g} value={g} style={{ color: "#000" }}>
-                    {g}
-                  </option>
-                ))}
-              </select>
-              {genderIdentity === "Other" && (
-                <input
-                  className="login-input"
-                  value={customGenderIdentity}
-                  onChange={(e) => setCustomGenderIdentity(e.target.value)}
-                  placeholder="Type your gender identity"
-                  required
-                  style={{ marginTop: "6px" }}
-                />
-              )}
-            </div>
+                <div className="login-field">
+                  <label>Age</label>
+                  <input
+                    type="number"
+                    className="login-input"
+                    min={18}
+                    value={age}
+                    onChange={(e) => setAge(e.target.value)}
+                    placeholder="Must be 18 or older"
+                    required
+                  />
+                </div>
 
-            <div className="login-field">
-              <label>Pronouns (optional)</label>
-              <input className="login-input" value={pronouns} onChange={(e) => setPronouns(e.target.value)} placeholder="e.g. they/them" />
-            </div>
+                <div className="login-field">
+                  <label>Password (min 8 characters)</label>
+                  <input
+                    type="password"
+                    className="login-input"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    minLength={8}
+                    required
+                  />
+                </div>
 
-            <div className="login-field">
-              <label>Dating intentions</label>
-              <select className="login-input" value={datingIntentions} onChange={(e) => setDatingIntentions(e.target.value)}>
-                {DATING_INTENTIONS.map((d) => (
-                  <option key={d.value} value={d.value} style={{ color: "#000" }}>
-                    {d.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+                {stepError && <p className="login-error-text">{stepError}</p>}
 
-            {error && <p className="login-error-text">{error}</p>}
+                <button type="button" className="login-btn" onClick={handleNextStep}>
+                  Next
+                </button>
+              </div>
+            )}
 
-            <button className="login-btn" disabled={loading} type="submit">
-              {loading ? "Creating account..." : "Sign up"}
-            </button>
-          </form>
+            {formStep === 2 && (
+              <form onSubmit={handleSubmit} className="login-glass-card">
+                <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 13, marginTop: 0, marginBottom: 16, textAlign: "center" }}>
+                  Step 2 of 2 — Preferences
+                </p>
+
+                <div className="login-field">
+                  <label>Sexual orientation</label>
+                  <select className="login-input" value={orientation} onChange={(e) => setOrientation(e.target.value)}>
+                    {ORIENTATIONS.map((o) => (
+                      <option key={o} value={o} style={{ color: "#000" }}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                  {orientation === "Other" && (
+                    <input
+                      className="login-input"
+                      value={customOrientation}
+                      onChange={(e) => setCustomOrientation(e.target.value)}
+                      placeholder="Type your orientation"
+                      required
+                      style={{ marginTop: "6px" }}
+                    />
+                  )}
+                </div>
+
+                <div className="login-field">
+                  <label>Gender identity</label>
+                  <select className="login-input" value={genderIdentity} onChange={(e) => setGenderIdentity(e.target.value)}>
+                    {GENDER_IDENTITIES.map((g) => (
+                      <option key={g} value={g} style={{ color: "#000" }}>
+                        {g}
+                      </option>
+                    ))}
+                  </select>
+                  {genderIdentity === "Other" && (
+                    <input
+                      className="login-input"
+                      value={customGenderIdentity}
+                      onChange={(e) => setCustomGenderIdentity(e.target.value)}
+                      placeholder="Type your gender identity"
+                      required
+                      style={{ marginTop: "6px" }}
+                    />
+                  )}
+                </div>
+
+                <div className="login-field">
+                  <label>Pronouns (optional)</label>
+                  <input
+                    className="login-input"
+                    value={pronouns}
+                    onChange={(e) => setPronouns(e.target.value)}
+                    placeholder="e.g. they/them"
+                  />
+                </div>
+
+                <div className="login-field">
+                  <label>Dating intentions</label>
+                  <select
+                    className="login-input"
+                    value={datingIntentions}
+                    onChange={(e) => setDatingIntentions(e.target.value)}
+                  >
+                    {DATING_INTENTIONS.map((d) => (
+                      <option key={d.value} value={d.value} style={{ color: "#000" }}>
+                        {d.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {error && <p className="login-error-text">{error}</p>}
+
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button
+                    type="button"
+                    className="login-btn"
+                    style={{ background: "rgba(255,255,255,0.12)", color: "#fff", flex: "0 0 90px" }}
+                    onClick={handleBackStep}
+                    disabled={loading}
+                  >
+                    Back
+                  </button>
+                  <button className="login-btn" disabled={loading} type="submit" style={{ flex: 1 }}>
+                    {loading ? "Creating account..." : "Sign up"}
+                  </button>
+                </div>
+              </form>
+            )}
+          </>
         )}
 
         <p className="login-footer-text">
