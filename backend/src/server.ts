@@ -14,6 +14,7 @@ import messageRoutes from "./routes/messages";
 import swipeRoutes from "./routes/swipes";
 import verificationRoutes from "./routes/verification";
 import communityRoutes from "./routes/communities";
+import adminRoutes from "./routes/admin";
 import notificationRoutes from "./routes/notifications";
 import videoRoutes from "./routes/video";
 import { initChatSocket } from "./socket/chat";
@@ -43,6 +44,7 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/swipes", swipeRoutes);
 app.use("/api/verification", verificationRoutes);
 app.use("/api/communities", communityRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/video", videoRoutes);
 app.get("/health", (_req, res) => {
