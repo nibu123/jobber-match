@@ -5,6 +5,7 @@
  * Needs DATABASE_URL env var pointing to your Supabase Postgres instance
  * (same one your backend uses -- copy from Railway env vars).
  */
+import 'dotenv/config';
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 import readline from 'readline';
