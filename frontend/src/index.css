@@ -936,9 +936,6 @@ input, select, textarea {
   z-index: 1;
 }
 
-
-
-
 /* ===== Pink glow behind card ===== */
 .card {
   position: relative;
@@ -958,8 +955,6 @@ input, select, textarea {
 .card {
   z-index: 1;
 }
-
-
 
 /* ===== Smoky entrance for new swipe card ===== */
 @keyframes smokeIn {
@@ -982,7 +977,6 @@ input, select, textarea {
 .swipe-card {
   animation: smokeIn 0.45s cubic-bezier(.22,1,.36,1);
 }
-
 
 /* ===== Form readability fix: solid card, clear labels/inputs ===== */
 .card {
@@ -1073,24 +1067,25 @@ input::placeholder {
 }
 
 .login-input {
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 12px;
-  padding: 13px 14px;
-  color: #fff;
+  background: rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  border-radius: 12px !important;
+  padding: 13px 14px !important;
+  color: #fff !important;
   font-size: 15px;
   font-family: inherit;
   width: 100%;
 }
 
 .login-input::placeholder {
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.6) !important;
+  opacity: 1 !important;
 }
 
 .login-input:focus {
-  outline: none;
-  border-color: #fff;
-  background: rgba(255, 255, 255, 0.18);
+  outline: none !important;
+  border-color: #fff !important;
+  background: rgba(255, 255, 255, 0.18) !important;
 }
 
 .login-btn {

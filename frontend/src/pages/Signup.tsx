@@ -138,172 +138,184 @@ export default function Signup() {
   }
 
   return (
-    <div className="container">
-      <div style={{ textAlign: "center", margin: "32px 0" }}>
-        <div className="brand">Buddies Pride</div>
-        <p className="tagline">Find your people</p>
-      </div>
-
-      <div className="card" style={{ marginBottom: emailVerified ? 16 : 0 }}>
-        <div className="field">
-          <label>Email</label>
-          <div style={{ display: "flex", gap: 8 }}>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={emailVerified}
-              required
-              style={{ flex: 1 }}
-            />
-            {!emailVerified && (
-              <button
-                type="button"
-                className="btn"
-                onClick={handleSendOtp}
-                disabled={otpLoading || resendCooldown > 0}
-              >
-                {otpSent
-                  ? resendCooldown > 0
-                    ? `Resend (${resendCooldown}s)`
-                    : "Resend code"
-                  : otpLoading
-                  ? "Sending..."
-                  : "Send code"}
-              </button>
-            )}
-            {emailVerified && <span style={{ color: "var(--gold, #eab564)", alignSelf: "center" }}>✓ Verified</span>}
-          </div>
+    <div className="login-page">
+      <div style={{ width: "100%", maxWidth: 420, position: "relative", zIndex: 1 }}>
+        <div className="login-brand-wrap">
+          <div className="brand">Buddies Pride</div>
+          <p className="login-tagline">Find your people</p>
         </div>
 
-        {otpSent && !emailVerified && (
-          <div className="field">
-            <label>Enter 6-digit code</label>
+        <div className="login-glass-card" style={{ marginBottom: emailVerified ? 16 : 0 }}>
+          <div className="login-field">
+            <label>Email</label>
             <div style={{ display: "flex", gap: 8 }}>
               <input
-                type="text"
-                inputMode="numeric"
-                maxLength={6}
-                value={otpCode}
-                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
-                placeholder="000000"
-                style={{ flex: 1, letterSpacing: "4px" }}
+                type="email"
+                className="login-input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={emailVerified}
+                required
+                style={{ flex: 1 }}
               />
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleVerifyOtp}
-                disabled={otpLoading || otpCode.length !== 6}
-              >
-                {otpLoading ? "Verifying..." : "Verify"}
-              </button>
+              {!emailVerified && (
+                <button
+                  type="button"
+                  className="login-btn"
+                  style={{ width: "auto", padding: "0 16px", whiteSpace: "nowrap" }}
+                  onClick={handleSendOtp}
+                  disabled={otpLoading || resendCooldown > 0}
+                >
+                  {otpSent
+                    ? resendCooldown > 0
+                      ? `Resend (${resendCooldown}s)`
+                      : "Resend code"
+                    : otpLoading
+                    ? "Sending..."
+                    : "Send code"}
+                </button>
+              )}
+              {emailVerified && (
+                <span style={{ color: "#ffd76a", alignSelf: "center", fontSize: 14 }}>✓ Verified</span>
+              )}
             </div>
-            <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 6 }}>
-              Sent to {email}. Code expires in 10 minutes.
-            </p>
           </div>
+
+          {otpSent && !emailVerified && (
+            <div className="login-field">
+              <label>Enter 6-digit code</label>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input
+                  type="text"
+                  className="login-input"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+                  placeholder="000000"
+                  style={{ flex: 1, letterSpacing: "4px" }}
+                />
+                <button
+                  type="button"
+                  className="login-btn"
+                  style={{ width: "auto", padding: "0 16px", whiteSpace: "nowrap" }}
+                  onClick={handleVerifyOtp}
+                  disabled={otpLoading || otpCode.length !== 6}
+                >
+                  {otpLoading ? "Verifying..." : "Verify"}
+                </button>
+              </div>
+              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", marginTop: 6 }}>
+                Sent to {email}. Code expires in 10 minutes.
+              </p>
+            </div>
+          )}
+
+          {otpError && <p className="login-error-text">{otpError}</p>}
+        </div>
+
+        {emailVerified && (
+          <form onSubmit={handleSubmit} className="login-glass-card" style={{ marginTop: 16 }}>
+            <div className="login-field">
+              <label>Display name</label>
+              <input className="login-input" value={displayName} onChange={(e) => setDisplayName(e.target.value)} required />
+            </div>
+
+            <div className="login-field">
+              <label>Age</label>
+              <input
+                type="number"
+                className="login-input"
+                min={18}
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                placeholder="Must be 18 or older"
+                required
+              />
+            </div>
+
+            <div className="login-field">
+              <label>Password (min 8 characters)</label>
+              <input
+                type="password"
+                className="login-input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                minLength={8}
+                required
+              />
+            </div>
+
+            <div className="login-field">
+              <label>Sexual orientation</label>
+              <select className="login-input" value={orientation} onChange={(e) => setOrientation(e.target.value)}>
+                {ORIENTATIONS.map((o) => (
+                  <option key={o} value={o} style={{ color: "#000" }}>
+                    {o}
+                  </option>
+                ))}
+              </select>
+              {orientation === "Other" && (
+                <input
+                  className="login-input"
+                  value={customOrientation}
+                  onChange={(e) => setCustomOrientation(e.target.value)}
+                  placeholder="Type your orientation"
+                  required
+                  style={{ marginTop: "6px" }}
+                />
+              )}
+            </div>
+
+            <div className="login-field">
+              <label>Gender identity</label>
+              <select className="login-input" value={genderIdentity} onChange={(e) => setGenderIdentity(e.target.value)}>
+                {GENDER_IDENTITIES.map((g) => (
+                  <option key={g} value={g} style={{ color: "#000" }}>
+                    {g}
+                  </option>
+                ))}
+              </select>
+              {genderIdentity === "Other" && (
+                <input
+                  className="login-input"
+                  value={customGenderIdentity}
+                  onChange={(e) => setCustomGenderIdentity(e.target.value)}
+                  placeholder="Type your gender identity"
+                  required
+                  style={{ marginTop: "6px" }}
+                />
+              )}
+            </div>
+
+            <div className="login-field">
+              <label>Pronouns (optional)</label>
+              <input className="login-input" value={pronouns} onChange={(e) => setPronouns(e.target.value)} placeholder="e.g. they/them" />
+            </div>
+
+            <div className="login-field">
+              <label>Dating intentions</label>
+              <select className="login-input" value={datingIntentions} onChange={(e) => setDatingIntentions(e.target.value)}>
+                {DATING_INTENTIONS.map((d) => (
+                  <option key={d.value} value={d.value} style={{ color: "#000" }}>
+                    {d.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {error && <p className="login-error-text">{error}</p>}
+
+            <button className="login-btn" disabled={loading} type="submit">
+              {loading ? "Creating account..." : "Sign up"}
+            </button>
+          </form>
         )}
 
-        {otpError && <p className="error-text">{otpError}</p>}
+        <p className="login-footer-text">
+          Already have an account? <Link to="/login">Log in</Link>
+        </p>
       </div>
-
-      {emailVerified && (
-      <form onSubmit={handleSubmit} className="card">
-        <div className="field">
-          <label>Display name</label>
-          <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} required />
-        </div>
-
-        <div className="field">
-          <label>Age</label>
-          <input
-            type="number"
-            min={18}
-            value={age}
-            onChange={(e) => setAge(e.target.value)}
-            placeholder="Must be 18 or older"
-            required
-          />
-        </div>
-
-        <div className="field">
-          <label>Password (min 8 characters)</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            minLength={8}
-            required
-          />
-        </div>
-
-        <div className="field">
-          <label>Sexual orientation</label>
-          <select value={orientation} onChange={(e) => setOrientation(e.target.value)}>
-            {ORIENTATIONS.map((o) => (
-              <option key={o} value={o}>
-                {o}
-              </option>
-            ))}
-          </select>
-          {orientation === "Other" && (
-            <input
-              value={customOrientation}
-              onChange={(e) => setCustomOrientation(e.target.value)}
-              placeholder="Type your orientation"
-              required
-              style={{ marginTop: "6px" }}
-            />
-          )}
-        </div>
-
-        <div className="field">
-          <label>Gender identity</label>
-          <select value={genderIdentity} onChange={(e) => setGenderIdentity(e.target.value)}>
-            {GENDER_IDENTITIES.map((g) => (
-              <option key={g} value={g}>
-                {g}
-              </option>
-            ))}
-          </select>
-          {genderIdentity === "Other" && (
-            <input
-              value={customGenderIdentity}
-              onChange={(e) => setCustomGenderIdentity(e.target.value)}
-              placeholder="Type your gender identity"
-              required
-              style={{ marginTop: "6px" }}
-            />
-          )}
-        </div>
-
-        <div className="field">
-          <label>Pronouns (optional)</label>
-          <input value={pronouns} onChange={(e) => setPronouns(e.target.value)} placeholder="e.g. they/them" />
-        </div>
-
-        <div className="field">
-          <label>Dating intentions</label>
-          <select value={datingIntentions} onChange={(e) => setDatingIntentions(e.target.value)}>
-            {DATING_INTENTIONS.map((d) => (
-              <option key={d.value} value={d.value}>
-                {d.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {error && <p className="error-text">{error}</p>}
-
-        <button className="btn btn-primary" disabled={loading} type="submit">
-          {loading ? "Creating account..." : "Sign up"}
-        </button>
-      </form>
-      )}
-
-      <p style={{ textAlign: "center", marginTop: 16, color: "var(--text-muted)", fontSize: 14 }}>
-        Already have an account? <Link to="/login" style={{ color: "var(--gold)" }}>Log in</Link>
-      </p>
     </div>
   );
 }
