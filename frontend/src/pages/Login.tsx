@@ -8,7 +8,6 @@ import PumpingHeart from "../components/PumpingHeart";
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -30,37 +29,47 @@ export default function Login() {
   }
 
   return (
-    <div className="container">
-      <div style={{ textAlign: "center", margin: "32px 0" }}>
-        <PumpingHeart />
-            <div className="brand">Buddies Pride</div>
-        <p style={{ color: "var(--text-muted)", fontSize: 14 }}>Welcome back</p>
+    <div className="login-page">
+      <div className="login-glass-card">
+        <div className="login-brand-wrap">
+          <PumpingHeart />
+          <div className="brand">Buddies Pride</div>
+          <p className="login-tagline">Welcome back</p>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="login-field">
+            <label>Email</label>
+            <input
+              className="login-input"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div className="login-field">
+            <label>Password</label>
+            <input
+              className="login-input"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          {error && <p className="login-error-text">{error}</p>}
+
+          <button className="login-btn" disabled={loading} type="submit">
+            {loading ? "Logging in..." : "Log in"}
+          </button>
+        </form>
+
+        <p className="login-footer-text">
+          New here? <Link to="/signup">Create an account</Link>
+        </p>
       </div>
-
-      <form onSubmit={handleSubmit} className="card">
-        <div className="field">
-          <label>Email</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        </div>
-
-        <div className="field">
-          <label>Password</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        </div>
-
-        {error && <p className="error-text">{error}</p>}
-
-        <button className="btn btn-primary" disabled={loading} type="submit">
-          {loading ? "Logging in..." : "Log in"}
-        </button>
-      </form>
-
-      <p style={{ textAlign: "center", marginTop: 16, color: "var(--text-muted)", fontSize: 14 }}>
-        New here? <Link to="/signup" style={{ color: "var(--accent)" }}>Create an account</Link>
-      </p>
     </div>
   );
 }
-
-
-
