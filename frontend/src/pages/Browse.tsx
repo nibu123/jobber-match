@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import api from "../api/client";
 import TabBar from "../components/TabBar";
 
@@ -12,6 +12,7 @@ interface Profile {
   photos: string[];
   interests: string[];
   distance_km: string | null;
+  age: number | null;
 }
 
 const SWIPE_THRESHOLD = 100;
@@ -175,7 +176,7 @@ async function commitSwipe(targetUserId: string, action: "like" | "pass" | "supe
       {!loading && !current && (
         <div className="card" style={{ textAlign: "center", padding: 40 }}>
           <p style={{ color: "var(--text-muted)" }}>
-            No one nearby yet — check back soon, or widen your filters.
+            No one nearby yet â€” check back soon, or widen your filters.
           </p>
         </div>
       )}
@@ -242,9 +243,10 @@ async function commitSwipe(targetUserId: string, action: "like" | "pass" | "supe
                 setShowDetail(true);
               }}
             >
-              <div className="swipe-more-hint">▲ Tap for full profile</div>
+              <div className="swipe-more-hint">â–² Tap for full profile</div>
               <div className="swipe-name">
-                {current.display_name}{" "}
+                {current.display_name}
+                {current.age && <span>, {current.age}</span>}{" "}
                 {current.pronouns && (
                   <span style={{ color: "rgba(255,255,255,0.75)", fontWeight: 400, fontSize: 16 }}>
                     ({current.pronouns})
@@ -255,7 +257,7 @@ async function commitSwipe(targetUserId: string, action: "like" | "pass" | "supe
               <div className="swipe-tags">
                 <span className="tag">{current.orientation}</span>
                 {current.city && <span className="tag">{current.city}</span>}
-                {current.distance_km && <span className="tag">📍 {current.distance_km}</span>}
+                {current.distance_km && <span className="tag">ðŸ“ {current.distance_km}</span>}
               </div>
 
               {current.bio && <div className="swipe-bio">{current.bio}</div>}
@@ -270,7 +272,7 @@ async function commitSwipe(targetUserId: string, action: "like" | "pass" | "supe
               className="swipe-btn swipe-btn-pass"
               aria-label="Pass"
             >
-              ✕
+              âœ•
             </button>
             <button
               type="button"
@@ -279,7 +281,7 @@ async function commitSwipe(targetUserId: string, action: "like" | "pass" | "supe
               className="swipe-btn swipe-btn-super"
               aria-label="Superlike"
             >
-              ★
+              â˜…
             </button>
             <button
               type="button"
@@ -288,7 +290,7 @@ async function commitSwipe(targetUserId: string, action: "like" | "pass" | "supe
               className="btn-primary swipe-btn swipe-btn-like"
               aria-label="Like"
             >
-              ♥
+              â™¥
             </button>
           </div>
         </div>
@@ -361,13 +363,14 @@ async function commitSwipe(targetUserId: string, action: "like" | "pass" | "supe
               }}
               aria-label="Close"
             >
-              ✕
+              âœ•
             </button>
 
             <div className="photo-gradient-overlay" />
             <div className="photo-name-overlay">
               <div className="detail-name">
-                {current.display_name}{" "}
+                {current.display_name}
+                {current.age && <span>, {current.age}</span>}{" "}
                 {current.pronouns && (
                   <span style={{ color: "rgba(255,255,255,0.75)", fontWeight: 400, fontSize: 18 }}>
                     ({current.pronouns})
@@ -377,7 +380,7 @@ async function commitSwipe(targetUserId: string, action: "like" | "pass" | "supe
               <div className="swipe-tags" style={{ margin: "10px 0" }}>
                 <span className="tag">{current.orientation}</span>
                 {current.city && <span className="tag">{current.city}</span>}
-                {current.distance_km && <span className="tag">📍 {current.distance_km}</span>}
+                {current.distance_km && <span className="tag">ðŸ“ {current.distance_km}</span>}
               </div>
             </div>
           </div>
@@ -410,7 +413,7 @@ async function commitSwipe(targetUserId: string, action: "like" | "pass" | "supe
               className="swipe-btn swipe-btn-pass"
               aria-label="Pass"
             >
-              ✕
+              âœ•
             </button>
             <button
               type="button"
@@ -419,7 +422,7 @@ async function commitSwipe(targetUserId: string, action: "like" | "pass" | "supe
               className="swipe-btn swipe-btn-super"
               aria-label="Superlike"
             >
-              ★
+              â˜…
             </button>
             <button
               type="button"
@@ -428,7 +431,7 @@ async function commitSwipe(targetUserId: string, action: "like" | "pass" | "supe
               className="btn-primary swipe-btn swipe-btn-like"
               aria-label="Like"
             >
-              ♥
+              â™¥
             </button>
           </div>
         </div>
