@@ -1131,3 +1131,89 @@ input::placeholder {
   font-weight: 600;
   text-decoration: none;
 }
+/* ===== V2: Ambient pride glow (not wallpaper) + full-bleed mobile card + icon tabbar ===== */
+
+/* Background: colors ab edges pe glow karte hain, center (card ke peeche) dark rehta hai */
+.pride-flag-bg {
+  opacity: 0.22 !important;
+  -webkit-mask-image: radial-gradient(ellipse at center, transparent 0%, transparent 38%, black 78%);
+  mask-image: radial-gradient(ellipse at center, transparent 0%, transparent 38%, black 78%);
+}
+
+/* Card halo: single pink blob ki jagah slow-rotating rainbow ring */
+.card::before {
+  background: conic-gradient(
+    from 0deg,
+    #ff6b4a, #f4c95d, #5fd6c0, #7c3aed, #ff2d95, #ff6b4a
+  );
+  filter: blur(60px) saturate(130%);
+  opacity: 0.35;
+  animation: haloSpin 12s linear infinite;
+}
+
+@keyframes haloSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Full-bleed swipe card on phones */
+@media (max-width: 560px) {
+  .container {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .swipe-photo-wrap {
+    aspect-ratio: auto;
+    height: calc(100dvh - 210px);
+    border-radius: 0;
+  }
+  .card.swipe-card {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .card.swipe-card::before {
+    display: none;
+  }
+}
+
+/* Naam readable banao */
+.swipe-name,
+.detail-name {
+  font-family: "Bricolage Grotesque", "Inter", sans-serif !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.01em;
+}
+
+/* ===== Icon tab bar ===== */
+nav.tabbar {
+  padding: 10px 0 !important;
+}
+
+.tabbar-link {
+  text-decoration: none;
+  color: var(--text-muted-dim);
+  font-family: "Inter", sans-serif !important;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 14px;
+  border-radius: 14px;
+  transition: color 0.15s ease;
+}
+
+.tabbar-icon {
+  display: flex;
+}
+
+.tabbar-link.active {
+  color: var(--gold) !important;
+}
+
+.tabbar-label {
+  opacity: 0.9;
+}
