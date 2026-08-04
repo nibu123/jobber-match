@@ -402,9 +402,12 @@ router.get("/browse", requireAuth, async (req: AuthRequest, res) => {
       SELECT p.user_id, p.display_name, p.bio, p.orientation, p.gender_identity,
              p.pronouns, p.photos, p.city, p.age, p.dating_intentions,
              p.relationship_structure, p.height_cm, p.interests,
+             u.is_verified,
+             (u.last_active_at IS NOT NULL AND u.last_active_at > NOW() - INTERVAL '15 minutes') AS recently_active,
              ${distanceSql},
              ${sharedInterestsSql}
       FROM profiles p
+      JOIN users u ON u.id = p.user_id
       WHERE p.user_id != $1
         AND p.incognito_mode = FALSE
         AND p.user_id NOT IN (

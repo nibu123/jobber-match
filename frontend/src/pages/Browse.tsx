@@ -13,6 +13,8 @@ interface Profile {
   interests: string[];
   distance_km: string | null;
   age: number | null;
+  is_verified: boolean;
+  recently_active: boolean;
 }
 
 const SWIPE_THRESHOLD = 100;
@@ -246,6 +248,16 @@ async function commitSwipe(targetUserId: string, action: "like" | "pass" | "supe
               <div className="swipe-more-hint">▲ Tap for full profile</div>
               <div className="swipe-name">
                 {current.display_name}
+                {current.is_verified && (
+                  <span title="Verified" style={{ marginLeft: 6, fontSize: 12, fontWeight: 700, color: "#38bdf8" }}>
+                    Verified
+                  </span>
+                )}
+                {current.recently_active && (
+                  <span title="Recently active" style={{ marginLeft: 8, color: "#4ade80", fontSize: 12, fontWeight: 600 }}>
+                    Active
+                  </span>
+                )}
                 {current.age && <span>, {current.age}</span>}{" "}
                 {current.pronouns && (
                   <span style={{ color: "rgba(255,255,255,0.75)", fontWeight: 400, fontSize: 16 }}>
@@ -370,6 +382,16 @@ async function commitSwipe(targetUserId: string, action: "like" | "pass" | "supe
             <div className="photo-name-overlay">
               <div className="detail-name">
                 {current.display_name}
+                {current.is_verified && (
+                  <span title="Verified" style={{ marginLeft: 6, fontSize: 12, fontWeight: 700, color: "#38bdf8" }}>
+                    Verified
+                  </span>
+                )}
+                {current.recently_active && (
+                  <span title="Recently active" style={{ marginLeft: 8, color: "#4ade80", fontSize: 12, fontWeight: 600 }}>
+                    Active
+                  </span>
+                )}
                 {current.age && <span>, {current.age}</span>}{" "}
                 {current.pronouns && (
                   <span style={{ color: "rgba(255,255,255,0.75)", fontWeight: 400, fontSize: 18 }}>
