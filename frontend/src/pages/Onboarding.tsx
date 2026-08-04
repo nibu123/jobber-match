@@ -58,6 +58,23 @@ function buzz(ms = 8) {
   if (navigator.vibrate) navigator.vibrate(ms);
 }
 
+// Requests the browser's geolocation. Resolves to null (never rejects)
+// if unsupported, denied, or timed out — location is optional and
+// should never block onboarding from completing.
+function getLocation(): Promise<{ latitude: number; longitude: number } | null> {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      resolve(null);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+      () => resolve(null),
+      { timeout: 8000, maximumAge: 60000 }
+    );
+  });
+}
+
 function CheckIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none">
@@ -150,6 +167,11 @@ export default function Onboarding() {
     setSaving(true);
     setSaveError("");
     try {
+      // Ask for location silently at the end of onboarding. If the user
+      // denies or the browser doesn't support it, we still finish —
+      // location is optional, just needed for distance features later.
+      const location = await getLocation();
+
       // Backend's `orientation` column is a single string, not an array.
       // The wizard UI allows selecting up to 3 for future-proofing; only
       // the first pick is persisted for now.
@@ -163,6 +185,7 @@ export default function Onboarding() {
         interestedIn: state.interestedIn ? [state.interestedIn] : [],
         age: calculateAge(state.dob),
         interests: state.interests,
+        ...(location ? { latitude: location.latitude, longitude: location.longitude } : {}),
       });
       setFinished(true);
     } catch (err) {
