@@ -32,37 +32,6 @@ function jitterCoordinate(lat: number, lng: number, radiusKm: number = 1): { lat
   return { latitude: lat + deltaLat, longitude: lng + deltaLng };
 }
 
-// Reverse-geocodes precise (pre-jitter) coordinates into a city name via
-// OpenStreetMap Nominatim. Never throws - resolves to null on any failure,
-// timeout, or missing address component, so it can never block a profile
-// save. Nominatim usage policy requires a descriptive User-Agent and no
-// aggressive request rate; this is called at most once per profile update.
-async function reverseGeocodeCity(lat: number, lng: number): Promise<string | null> {
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3000);
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`,
-      {
-        signal: controller.signal,
-        headers: {
-          "User-Agent": "BuddiesPride/1.0 (jobber-match profile location)",
-          "Accept-Language": "en",
-        },
-      }
-    );
-    clearTimeout(timeout);
-    if (!response.ok) return null;
-    const data = await response.json();
-    const addr = data?.address || {};
-    const city = addr.city || addr.town || addr.village || addr.suburb || addr.county || null;
-    return city;
-  } catch (err) {
-    console.error("Reverse geocoding failed:", err);
-    return null;
-  }
-}
-
 // Converts a precise km value into a coarse display bucket so the
 // +/-1-2km noise introduced by jitterCoordinate() isn't presented
 // to users as a falsely precise number.
@@ -151,15 +120,6 @@ router.patch("/me", requireAuth, async (req: AuthRequest, res) => {
     (fields as any).prompts = JSON.stringify(fields.prompts);
   }
   if (fields.latitude != null && fields.longitude != null) {
-    // Auto-detect city from precise (pre-jitter) coordinates, but only
-    // when the caller didn't explicitly set city themselves - a manual
-    // edit on the profile page should never be overwritten by this.
-    if (fields.city === undefined) {
-      const detectedCity = await reverseGeocodeCity(fields.latitude, fields.longitude);
-      if (detectedCity) {
-        fields.city = detectedCity;
-      }
-    }
     const jittered = jitterCoordinate(fields.latitude, fields.longitude, 1);
     fields.latitude = jittered.latitude;
     fields.longitude = jittered.longitude;
