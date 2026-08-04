@@ -255,6 +255,30 @@ export default function Profile() {
     navigate("/login");
   }
 
+  async function handleEnableLocation() {
+    if (!navigator.geolocation) {
+      setPhotoError("Location isn't supported on this browser");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const res = await api.patch("/profiles/me", {
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+          });
+          setProfile((p) => (p ? { ...p, ...res.data } : p));
+        } catch (err) {
+          console.error("Failed to save location", err);
+        }
+      },
+      () => {
+        setPhotoError("Location permission denied. Enable it in your browser settings to see distance to others.");
+      },
+      { timeout: 8000, maximumAge: 60000 }
+    );
+  }
+
   if (loading) {
     return (
       <div className="container">
@@ -654,6 +678,10 @@ export default function Profile() {
                 Blur my exact distance from others
               </label>
             </div>
+
+            <button type="button" className="btn btn-secondary" style={{ marginBottom: 16 }} onClick={handleEnableLocation}>
+              📍 Enable location (see distance to others)
+            </button>
           </div>
         )}
 
