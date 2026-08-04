@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { UAParser } from "ua-parser-js";
 import { pool } from "../db/pool";
-import { sendOtpEmail } from "../utils/email";
+import { sendOtpEmail, sendPasswordResetOtpEmail } from "../utils/email";
 
 const router = Router();
 
@@ -108,10 +108,13 @@ router.post("/send-otp", async (req, res) => {
     const code = generateOtpCode();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    await pool.query("UPDATE otp_codes SET consumed = TRUE WHERE email = $1 AND consumed = FALSE", [email]);
+    await pool.query(
+      "UPDATE otp_codes SET consumed = TRUE WHERE email = $1 AND purpose = 'signup' AND consumed = FALSE",
+      [email]
+    );
 
     await pool.query(
-      "INSERT INTO otp_codes (email, code, expires_at) VALUES ($1, $2, $3)",
+      "INSERT INTO otp_codes (email, code, expires_at, purpose) VALUES ($1, $2, $3, 'signup')",
       [email, code, expiresAt]
     );
 
@@ -139,7 +142,7 @@ router.post("/verify-otp", async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT id, code, expires_at, attempts FROM otp_codes
-       WHERE email = $1 AND consumed = FALSE
+       WHERE email = $1 AND purpose = 'signup' AND consumed = FALSE
        ORDER BY created_at DESC LIMIT 1`,
       [email]
     );
@@ -292,6 +295,153 @@ router.post("/login", async (req, res) => {
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// ---- Forgot password ----
+
+const forgotPasswordRequestSchema = z.object({
+  email: z.string().email(),
+});
+
+router.post("/forgot-password/request", async (req, res) => {
+  const parsed = forgotPasswordRequestSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Enter a valid email address" });
+  }
+  const { email } = parsed.data;
+
+  // Always respond the same way whether the email exists or not,
+  // so this endpoint can't be used to check which emails are registered.
+  const GENERIC_RESPONSE = {
+    success: true,
+    message: "If an account with that email exists, a reset code has been sent.",
+  };
+
+  try {
+    const existingUser = await pool.query("SELECT id FROM users WHERE email = $1", [email]);
+    if (existingUser.rows.length === 0) {
+      return res.json(GENERIC_RESPONSE);
+    }
+
+    const code = generateOtpCode();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    await pool.query(
+      "UPDATE otp_codes SET consumed = TRUE WHERE email = $1 AND purpose = 'password_reset' AND consumed = FALSE",
+      [email]
+    );
+
+    await pool.query(
+      "INSERT INTO otp_codes (email, code, expires_at, purpose) VALUES ($1, $2, $3, 'password_reset')",
+      [email, code, expiresAt]
+    );
+
+    await sendPasswordResetOtpEmail(email, code);
+
+    res.json(GENERIC_RESPONSE);
+  } catch (err) {
+    console.error("Forgot password request error:", err);
+    res.status(500).json({ error: "Could not process request. Please try again." });
+  }
+});
+
+const forgotPasswordVerifySchema = z.object({
+  email: z.string().email(),
+  code: z.string().length(6),
+});
+
+router.post("/forgot-password/verify", async (req, res) => {
+  const parsed = forgotPasswordVerifySchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Enter the 6-digit code" });
+  }
+  const { email, code } = parsed.data;
+
+  try {
+    const result = await pool.query(
+      `SELECT id, code, expires_at, attempts FROM otp_codes
+       WHERE email = $1 AND purpose = 'password_reset' AND consumed = FALSE
+       ORDER BY created_at DESC LIMIT 1`,
+      [email]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(400).json({ error: "No code found. Please request a new one." });
+    }
+
+    const otp = result.rows[0];
+
+    if (new Date(otp.expires_at) < new Date()) {
+      return res.status(400).json({ error: "Code expired. Please request a new one." });
+    }
+
+    if (otp.attempts >= 5) {
+      return res.status(429).json({ error: "Too many attempts. Please request a new code." });
+    }
+
+    if (otp.code !== code) {
+      await pool.query("UPDATE otp_codes SET attempts = attempts + 1 WHERE id = $1", [otp.id]);
+      return res.status(400).json({ error: "Incorrect code" });
+    }
+
+    await pool.query("UPDATE otp_codes SET consumed = TRUE WHERE id = $1", [otp.id]);
+
+    // Short-lived token proving this email just verified a password-reset OTP.
+    // Same pattern as the email_verify token used during signup.
+    const resetToken = jwt.sign(
+      { email, purpose: "password_reset" },
+      process.env.JWT_SECRET as string,
+      { expiresIn: "15m" }
+    );
+
+    res.json({ resetToken });
+  } catch (err) {
+    console.error("Forgot password verify error:", err);
+    res.status(500).json({ error: "Verification failed" });
+  }
+});
+
+const resetPasswordSchema = z.object({
+  resetToken: z.string(),
+  newPassword: z.string().min(8),
+});
+
+router.post("/reset-password", async (req, res) => {
+  const parsed = resetPasswordSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
+  }
+  const { resetToken, newPassword } = parsed.data;
+
+  try {
+    let verifiedPayload: { email: string; purpose: string };
+    try {
+      verifiedPayload = jwt.verify(resetToken, process.env.JWT_SECRET as string) as {
+        email: string;
+        purpose: string;
+      };
+    } catch {
+      return res.status(400).json({ error: "Reset link expired. Please request a new code." });
+    }
+
+    if (verifiedPayload.purpose !== "password_reset") {
+      return res.status(400).json({ error: "Invalid reset token" });
+    }
+
+    const existingUser = await pool.query("SELECT id FROM users WHERE email = $1", [verifiedPayload.email]);
+    if (existingUser.rows.length === 0) {
+      return res.status(400).json({ error: "Invalid reset token" });
+    }
+    const userId = existingUser.rows[0].id;
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await pool.query("UPDATE users SET password_hash = $1 WHERE id = $2", [passwordHash, userId]);
+
+    res.json({ success: true, message: "Password reset successful. Please log in with your new password." });
+  } catch (err) {
+    console.error("Reset password error:", err);
+    res.status(500).json({ error: "Could not reset password. Please try again." });
   }
 });
 

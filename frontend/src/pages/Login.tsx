@@ -67,6 +67,10 @@ export default function Login() {
         </form>
 
         <p className="login-footer-text">
+          <Link to="/forgot-password">Forgot password?</Link>
+        </p>
+
+        <p className="login-footer-text">
           New here? <Link to="/signup">Create an account</Link>
         </p>
       </div>
