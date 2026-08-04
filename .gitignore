@@ -3,3 +3,4 @@ test-image.jpg
 .env*
 backend/.env
 backend/set-railway-env.ps1
+*.bak-*
