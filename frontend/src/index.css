@@ -202,34 +202,7 @@ a {
   color: var(--text-muted);
 }
 
-nav.tabbar {
-  position: fixed;
-  bottom: 16px;
-  left: 16px;
-  right: 16px;
-  max-width: 448px;
-  margin: 0 auto;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  display: flex;
-  justify-content: space-around;
-  padding: 12px 0;
-  box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.6);
-}
 
-nav.tabbar a {
-  text-decoration: none;
-  color: var(--text-muted-dim);
-  font-size: 13px;
-  font-weight: 600;
-  text-align: center;
-  font-family: "Great Vibes", cursive;
-}
-
-nav.tabbar a.active {
-  color: var(--gold);
-}
 
 .msg-bubble {
   max-width: 75%;
@@ -300,19 +273,7 @@ input:focus, select:focus, textarea:focus {
   outline: none !important;
 }
 
-/* ===== TabBar override ===== */
-nav.tabbar {
-  background: #1a1220 !important;
-  border: 1px solid #2e2438 !important;
-}
 
-nav.tabbar a {
-  color: #9d94ab !important;
-}
-
-nav.tabbar a.active {
-  color: #c084fc !important;
-}
 
 /* ===== Root palette override — replaces old maroon/orange/teal system-wide ===== */
 :root {
@@ -1186,34 +1147,35 @@ input::placeholder {
   letter-spacing: -0.01em;
 }
 
-/* ===== Icon tab bar ===== */
+/* ===== Icon tab bar (consolidated) ===== */
 nav.tabbar {
-  padding: 10px 0 !important;
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  max-width: 448px;
+  margin: 0 auto;
+  background: #1a1220;
+  border: 1px solid #2e2438;
+  border-radius: 999px;
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+  box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.6);
 }
-
 .tabbar-link {
   text-decoration: none;
   color: var(--text-muted-dim);
-  font-family: "Inter", sans-serif !important;
-  font-size: 11px;
-  font-weight: 600;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 4px 14px;
+  justify-content: center;
+  padding: 10px 18px;
   border-radius: 14px;
   transition: color 0.15s ease;
 }
-
 .tabbar-icon {
   display: flex;
 }
-
 .tabbar-link.active {
-  color: var(--gold) !important;
-}
-
-.tabbar-label {
-  opacity: 0.9;
+  color: var(--gold);
 }
