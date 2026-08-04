@@ -11,6 +11,7 @@ interface Profile {
   city: string | null;
   photos: string[];
   interests: string[];
+  distance_km: string | null;
 }
 
 const SWIPE_THRESHOLD = 100;
@@ -254,6 +255,7 @@ async function commitSwipe(targetUserId: string, action: "like" | "pass" | "supe
               <div className="swipe-tags">
                 <span className="tag">{current.orientation}</span>
                 {current.city && <span className="tag">{current.city}</span>}
+                {current.distance_km && <span className="tag">📍 {current.distance_km}</span>}
               </div>
 
               {current.bio && <div className="swipe-bio">{current.bio}</div>}
@@ -375,6 +377,7 @@ async function commitSwipe(targetUserId: string, action: "like" | "pass" | "supe
               <div className="swipe-tags" style={{ margin: "10px 0" }}>
                 <span className="tag">{current.orientation}</span>
                 {current.city && <span className="tag">{current.city}</span>}
+                {current.distance_km && <span className="tag">📍 {current.distance_km}</span>}
               </div>
             </div>
           </div>
@@ -435,8 +438,3 @@ async function commitSwipe(targetUserId: string, action: "like" | "pass" | "supe
     </div>
   );
 }
-
-
-
-
-
