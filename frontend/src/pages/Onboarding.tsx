@@ -20,7 +20,7 @@ const INTERESTS = [
   "Cooking", "Standup comedy", "Yoga", "Astrology", "Cafe hopping", "Theatre",
 ];
 
-const STEPS = ["orientation", "lookingFor", "name", "gender", "interestedIn", "birthday", "interests", "photos"] as const;
+const STEPS = ["orientation", "lookingFor", "name", "gender", "interestedIn", "birthday", "interests", "photos", "location"] as const;
 type Step = (typeof STEPS)[number];
 
 const MAX_PHOTOS = 6;
@@ -94,6 +94,9 @@ export default function Onboarding() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  const [locationCoords, setLocationCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [locationStatus, setLocationStatus] = useState<"idle" | "checking" | "granted" | "denied">("idle");
+
   const [state, setState] = useState<OnbState>({
     orientation: [],
     orientationVisible: false,
@@ -123,11 +126,41 @@ export default function Onboarding() {
     }
     if (step === "interests") return true;
     if (step === "photos") return state.photos.length >= 2;
+    // Location is always optional — never blocks the wizard from finishing,
+    // whether the user granted, denied, or hasn't been asked yet.
+    if (step === "location") return true;
     return true;
+  }
+
+  // Fires the real browser/OS permission prompt. Only ever called from an
+  // explicit tap on "Enable Location" on the priming screen below — never
+  // silently. Resolves to null (never throws) on denial/timeout/unsupported.
+  async function requestLocation() {
+    buzz();
+    setLocationStatus("checking");
+    const loc = await getLocation();
+    if (loc) {
+      setLocationCoords(loc);
+      setLocationStatus("granted");
+    } else {
+      setLocationStatus("denied");
+    }
+  }
+
+  function skipLocation() {
+    buzz();
+    setLocationStatus("denied");
   }
 
   async function nextStep() {
     if (!stepIsValid()) return;
+    // On the location step, the first tap of the main CTA triggers the
+    // permission prompt itself rather than advancing — the button doubles
+    // as "Enable Location". A second tap (after granted/denied) finishes.
+    if (step === "location" && locationStatus === "idle") {
+      await requestLocation();
+      return;
+    }
     buzz(12);
     if (stepIndex < STEPS.length - 1) {
       setStepIndex((i) => i + 1);
@@ -167,11 +200,8 @@ export default function Onboarding() {
     setSaving(true);
     setSaveError("");
     try {
-      // Ask for location silently at the end of onboarding. If the user
-      // denies or the browser doesn't support it, we still finish —
-      // location is optional, just needed for distance features later.
-      const location = await getLocation();
-
+      // Location was already requested (or explicitly skipped) on the
+      // priming screen — use whatever was captured there. Never re-prompt.
       // Backend's `orientation` column is a single string, not an array.
       // The wizard UI allows selecting up to 3 for future-proofing; only
       // the first pick is persisted for now.
@@ -185,7 +215,7 @@ export default function Onboarding() {
         interestedIn: state.interestedIn ? [state.interestedIn] : [],
         age: calculateAge(state.dob),
         interests: state.interests,
-        ...(location ? { latitude: location.latitude, longitude: location.longitude } : {}),
+        ...(locationCoords ? { latitude: locationCoords.latitude, longitude: locationCoords.longitude } : {}),
       });
       setFinished(true);
     } catch (err) {
@@ -296,6 +326,10 @@ export default function Onboarding() {
   const ctaLabel =
     step === "interests" && state.interests.length > 0
       ? `Next (${state.interests.length}/${MAX_INTERESTS})`
+      : step === "location"
+      ? locationStatus === "idle"
+        ? "Enable Location"
+        : "Finish"
       : stepIndex === STEPS.length - 1
       ? "Finish"
       : "Next";
@@ -573,6 +607,35 @@ export default function Onboarding() {
                   {photoError && <p className="onb-error-text">{photoError}</p>}
                   {uploading && <p className="onb-helper">Uploading...</p>}
                   <p className="onb-photo-note">Photos are reviewed for authenticity before your profile goes live. No screenshots or group photos as your main picture.</p>
+                </>
+              )}
+
+              {step === "location" && (
+                <>
+                  <p className="onb-eyebrow">step {stepIndex + 1} of {STEPS.length}</p>
+                  <div style={{ fontSize: 56, lineHeight: 1, marginBottom: 8 }} aria-hidden="true">{"\u{1F4CD}"}</div>
+                  <h1 className="onb-h1">See who's <em>nearby</em></h1>
+                  <p className="onb-subtext">
+                    Enable location so matches can see how far away you are, and so we can show you people closer to you first. You're always in control - turn it off anytime in Settings.
+                  </p>
+
+                  {locationStatus === "checking" && (
+                    <p className="onb-helper">Waiting for your response in the browser prompt...</p>
+                  )}
+                  {locationStatus === "granted" && (
+                    <p className="onb-helper">Location enabled - you're all set. {"\u{1F389}"}</p>
+                  )}
+                  {locationStatus === "denied" && (
+                    <p className="onb-helper">
+                      No worries - you can enable this later from your profile page. Distance just won't show on matches for now.
+                    </p>
+                  )}
+
+                  {locationStatus === "idle" && (
+                    <button type="button" className="onb-skip-btn" style={{ marginTop: 16 }} onClick={skipLocation}>
+                      Not now
+                    </button>
+                  )}
                 </>
               )}
             </>
