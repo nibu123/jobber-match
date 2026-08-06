@@ -1,0 +1,135 @@
+.welcome-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 4rem;
+  color: var(--text);
+}
+
+.welcome-hero {
+  text-align: center;
+  padding: 2rem 1rem 3rem;
+}
+
+.welcome-hero h1 {
+  font-size: 2.1rem;
+  line-height: 1.3;
+  margin: 0.5rem 0 1rem;
+  color: var(--text);
+}
+
+.welcome-subtext {
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  max-width: 640px;
+  margin: 0 auto 2rem;
+  line-height: 1.6;
+}
+
+.welcome-cta-group {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 2.5rem;
+}
+
+.welcome-btn {
+  padding: 0.8rem 1.9rem;
+  border-radius: var(--radius);
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-block;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.welcome-btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: var(--bg-deep);
+}
+
+.welcome-btn-primary:hover {
+  transform: translateY(-2px);
+}
+
+.welcome-btn-secondary {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  color: var(--text);
+}
+
+.welcome-btn-secondary:hover {
+  background: var(--surface-hover);
+}
+
+.welcome-btn-large {
+  font-size: 1.1rem;
+  padding: 0.95rem 2.4rem;
+  margin-top: 1.25rem;
+}
+
+.welcome-hero-img {
+  max-width: 320px;
+  width: 100%;
+  border-radius: var(--radius);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.welcome-section {
+  padding: 2.5rem 1rem;
+  text-align: center;
+}
+
+.welcome-section h2 {
+  color: var(--text);
+  margin-bottom: 1.25rem;
+}
+
+.welcome-about p {
+  max-width: 700px;
+  margin: 0 auto;
+  line-height: 1.7;
+  color: var(--text-muted);
+}
+
+.welcome-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.welcome-feature-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  text-align: left;
+}
+
+.welcome-feature-card h3 {
+  margin: 0 0 0.5rem;
+  color: var(--text);
+}
+
+.welcome-feature-card p {
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.welcome-safety ul {
+  max-width: 600px;
+  margin: 1.5rem auto 0;
+  text-align: left;
+  line-height: 1.9;
+  color: var(--text-muted);
+}
+
+.welcome-footer-cta {
+  text-align: center;
+  padding: 3rem 1rem 1rem;
+}
+
+.welcome-footer-cta h2 {
+  color: var(--text);
+}
