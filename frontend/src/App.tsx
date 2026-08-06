@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import Login from "./pages/Login";
+import Welcome from "./pages/Welcome";
 import ForgotPassword from "./pages/ForgotPassword";
 import Signup from "./pages/Signup";
 import Browse from "./pages/Browse";
@@ -36,6 +37,7 @@ export default function App() {
       {token && <CallManager />}
       <AdminAuthProvider>
       <Routes>
+      <Route path="/welcome" element={<Welcome />} />
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/signup" element={<Signup />} />
